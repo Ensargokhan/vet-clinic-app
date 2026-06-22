@@ -1,0 +1,52 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.log
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# NuGet
+packages/
+*.nupkg
+
+# Build
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment & Secrets
+appsettings.json
+appsettings.Production.json
+*.env
+.env.local
+.env.*.local
+firebase-adminsdk.json
+
+# AI Instructions & Drafts
+AGENTS.md
+*.draft.md
+
+# Flutter (sonrası için)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.iml
