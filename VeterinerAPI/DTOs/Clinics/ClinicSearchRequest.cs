@@ -5,6 +5,7 @@ public class ClinicSearchRequest
     public string? Search { get; set; }
     public string? City { get; set; }
     public string? District { get; set; }
+    public string? Specialty { get; set; }
     
     private int _page = 1;
     public int Page

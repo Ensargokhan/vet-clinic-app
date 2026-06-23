@@ -8,5 +8,5 @@ public interface IClinicRepository : IRepository<Clinic>
     Task<Clinic?> GetClinicWithVetsAsync(int clinicId);
     Task<Clinic?> GetClinicByAdminUserIdAsync(int adminUserId);
     Task<Clinic?> GetClinicWithDetailsAsync(int clinicId);
-    Task<(IEnumerable<Clinic> Items, int TotalCount)> SearchClinicsAsync(string? search, string? city, string? district, int page, int pageSize);
+    Task<(IEnumerable<Clinic> Items, int TotalCount)> SearchClinicsAsync(string? search, string? city, string? district, string? specialty, int page, int pageSize);
 }

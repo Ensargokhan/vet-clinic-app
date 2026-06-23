@@ -31,8 +31,13 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
   String? _searchQuery;
   String? _selectedCity;
+  String? _selectedDistrict;
+  String? _selectedSpecialty;
 
+  List<dynamic> _citiesData = [];
   List<String> _cities = [];
+  List<String> _districts = [];
+  List<String> _specialties = [];
 
   int _trCompare(String a, String b) {
     String replaceTr(String text) {
@@ -50,22 +55,56 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCitiesData();
+    _loadFilterData();
     _fetchClinics(refresh: true);
     _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _loadCitiesData() async {
+  Future<void> _loadFilterData() async {
     try {
-      final String response = await rootBundle.loadString('assets/data/turkey_cities.json');
-      final data = await json.decode(response);
+      // Şehirleri yükle
+      final String citiesResponse = await rootBundle.loadString('assets/data/turkey_cities.json');
+      final citiesData = await json.decode(citiesResponse);
+      
+      // Uzmanlık alanlarını yükle
+      final String specialtiesResponse = await rootBundle.loadString('assets/data/specialties.json');
+      final specialtiesData = await json.decode(specialtiesResponse);
+
       setState(() {
-        final List<dynamic> citiesData = data['data'];
-        _cities = citiesData.map<String>((city) => city['name'].toString()).toList();
+        _citiesData = citiesData['data'];
+        _cities = _citiesData.map<String>((city) => city['name'].toString()).toList();
         _cities.sort(_trCompare);
+        
+        _specialties = List<String>.from(specialtiesData['specialties']);
       });
     } catch (e) {
-      debugPrint("Error loading cities: $e");
+      debugPrint("Error loading filter data: $e");
+    }
+  }
+
+  void _updateDistricts(String? cityName) {
+    if (cityName == null) {
+      setState(() {
+        _districts = [];
+        _selectedDistrict = null;
+      });
+      return;
+    }
+    final city = _citiesData.firstWhere((c) => c['name'] == cityName, orElse: () => null);
+    if (city != null && city['districts'] != null) {
+      setState(() {
+        final List<dynamic> districtsData = city['districts'];
+        _districts = districtsData.map<String>((d) => d['name'].toString()).toList();
+        _districts.sort(_trCompare);
+        if (!_districts.contains(_selectedDistrict)) {
+          _selectedDistrict = null;
+        }
+      });
+    } else {
+      setState(() {
+        _districts = [];
+        _selectedDistrict = null;
+      });
     }
   }
 
@@ -117,6 +156,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
         'pageSize': _pageSize,
         if (_searchQuery != null) 'search': _searchQuery,
         if (_selectedCity != null) 'city': _selectedCity,
+        if (_selectedDistrict != null) 'district': _selectedDistrict,
+        if (_selectedSpecialty != null) 'specialty': _selectedSpecialty,
       };
 
       final response = await dio.get('/clinics', queryParameters: queryParams);
@@ -157,6 +198,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   void _showFilterBottomSheet() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -164,7 +206,12 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,6 +240,60 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       setModalState(() {
                         _selectedCity = val;
                       });
+                      _updateDistricts(val);
+                      setModalState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'İlçe Seçin',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: _selectedDistrict,
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('Tümü'),
+                      ),
+                      ..._districts.map((district) {
+                        return DropdownMenuItem(
+                          value: district,
+                          child: Text(district),
+                        );
+                      }),
+                    ],
+                    onChanged: _selectedCity == null
+                        ? null
+                        : (val) {
+                            setModalState(() {
+                              _selectedDistrict = val;
+                            });
+                          },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Uzmanlık Alanı Seçin',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: _selectedSpecialty,
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('Tümü'),
+                      ),
+                      ..._specialties.map((specialty) {
+                        return DropdownMenuItem(
+                          value: specialty,
+                          child: Text(specialty),
+                        );
+                      }),
+                    ],
+                    onChanged: (val) {
+                      setModalState(() {
+                        _selectedSpecialty = val;
+                      });
                     },
                   ),
                   const SizedBox(height: 24),
@@ -203,6 +304,9 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                           onPressed: () {
                             setState(() {
                               _selectedCity = null;
+                              _selectedDistrict = null;
+                              _selectedSpecialty = null;
+                              _districts = [];
                             });
                             Navigator.pop(context);
                             _fetchClinics(refresh: true);
@@ -226,6 +330,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 24),
                 ],
               ),
             );
@@ -247,7 +352,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             icon: Stack(
               children: [
                 const Icon(Icons.filter_list, color: AppTheme.primaryColor),
-                if (_selectedCity != null)
+                if (_selectedCity != null || _selectedDistrict != null || _selectedSpecialty != null)
                   Positioned(
                     right: 0,
                     top: 0,

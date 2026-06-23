@@ -50,7 +50,7 @@ public class ClinicService : IClinicService
     public async Task<VeterinerAPI.DTOs.Common.PagedResponse<ClinicResponse>> SearchClinicsAsync(ClinicSearchRequest request)
     {
         var (items, totalCount) = await _clinicRepository.SearchClinicsAsync(
-            request.Search, request.City, request.District, request.Page, request.PageSize);
+            request.Search, request.City, request.District, request.Specialty, request.Page, request.PageSize);
 
         var totalPages = (int)Math.Ceiling(totalCount / (double)request.PageSize);
 

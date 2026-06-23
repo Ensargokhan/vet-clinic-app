@@ -58,7 +58,7 @@ public class ClinicRepository : Repository<Clinic>, IClinicRepository
         return clinic;
     }
 
-    public async Task<(IEnumerable<Clinic> Items, int TotalCount)> SearchClinicsAsync(string? search, string? city, string? district, int page, int pageSize)
+    public async Task<(IEnumerable<Clinic> Items, int TotalCount)> SearchClinicsAsync(string? search, string? city, string? district, string? specialty, int page, int pageSize)
     {
         var query = _dbSet.Where(c => c.IsActive).AsQueryable();
 
@@ -70,6 +70,9 @@ public class ClinicRepository : Repository<Clinic>, IClinicRepository
 
         if (!string.IsNullOrWhiteSpace(district))
             query = query.Where(c => c.District == district);
+
+        if (!string.IsNullOrWhiteSpace(specialty))
+            query = query.Where(c => c.Vets.Any(v => v.IsActive && v.Specialty != null && v.Specialty == specialty));
 
         var totalCount = await query.CountAsync();
 
