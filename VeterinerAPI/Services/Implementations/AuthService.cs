@@ -148,6 +148,22 @@ public class AuthService : IAuthService
         return user;
     }
 
+    public async Task<string?> UpdateProfilePhotoAsync(string firebaseUid, string photoUrl)
+    {
+        var user = await _userRepository.GetByFirebaseUidAsync(firebaseUid);
+        if (user == null) throw new Exception("Kullanıcı bulunamadı.");
+        if (!user.IsActive) throw new Exception("Hesabınız sistem yöneticisi veya klinik tarafından pasife alınmıştır.");
+
+        var oldPhotoUrl = user.ProfilePhoto;
+        user.ProfilePhoto = photoUrl;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        return oldPhotoUrl;
+    }
+
     public async Task DeactivateUserAccountAsync(string firebaseUid)
     {
         var user = await _userRepository.GetByFirebaseUidAsync(firebaseUid);

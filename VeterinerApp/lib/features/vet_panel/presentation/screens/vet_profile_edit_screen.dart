@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/image_upload_service.dart';
 import 'package:dio/dio.dart';
 
 class VetProfileEditScreen extends StatefulWidget {
@@ -15,6 +17,8 @@ class VetProfileEditScreen extends StatefulWidget {
 
 class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
   bool _isLoading = false;
+  bool _isUploadingPhoto = false;
+  String? _profilePhotoUrl;
 
   final List<String> _titles = [
     'Veteriner Hekim',
@@ -51,6 +55,7 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
     final fetchedSpec = profile?['specialty'] ?? '';
     _selectedSpecialty = _specialties.contains(fetchedSpec) ? fetchedSpec : 'Genel Veteriner Hekim (Uzmanlık Yok)';
 
+    _profilePhotoUrl = profile?['profilePhoto'];
     _bioController = TextEditingController(text: profile?['bio'] ?? '');
     _phoneController = TextEditingController(text: profile?['phone'] ?? '');
   }
@@ -92,6 +97,33 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
     }
   }
 
+  Future<void> _handlePhotoUpload() async {
+    final file = await ImageUploadService.pickImage(context);
+    if (file == null) return;
+
+    setState(() => _isUploadingPhoto = true);
+
+    try {
+      final newPhotoUrl = await ImageUploadService.uploadProfilePhoto(file, '/vets/profile-photo');
+      if (newPhotoUrl != null && mounted) {
+        setState(() {
+          _profilePhotoUrl = newPhotoUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil fotoğrafı başarıyla güncellendi!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fotoğraf yüklenemedi.'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,6 +137,56 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            Center(
+              child: Stack(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: _profilePhotoUrl != null
+                          ? ClipOval(
+                              child: Image.network(
+                                'http://10.0.2.2:5295${_profilePhotoUrl}',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, size: 50, color: AppTheme.primaryColor),
+                              ),
+                            )
+                          : const Icon(Icons.person, size: 50, color: AppTheme.primaryColor),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _isUploadingPhoto ? null : _handlePhotoUpload,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: _isUploadingPhoto
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(

@@ -180,6 +180,20 @@ public class ClinicService : IClinicService
         return await GetClinicDetailsAsync(clinic.Id);
     }
 
+    public async Task<string?> UpdateClinicLogoAsync(string firebaseUid, string logoUrl)
+    {
+        var clinic = await GetAdminClinicAsync(firebaseUid);
+        
+        var oldLogoUrl = clinic.LogoUrl;
+        clinic.LogoUrl = logoUrl;
+        clinic.UpdatedAt = DateTime.UtcNow;
+
+        _clinicRepository.Update(clinic);
+        await _clinicRepository.SaveChangesAsync();
+
+        return oldLogoUrl;
+    }
+
     public async Task<object> AddVetToClinicAsync(string firebaseUid, AddVetToClinicRequest request)
     {
         var clinic = await GetAdminClinicAsync(firebaseUid);

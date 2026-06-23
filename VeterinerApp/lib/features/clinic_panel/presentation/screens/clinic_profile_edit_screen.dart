@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/image_upload_service.dart';
 import 'package:dio/dio.dart';
 
 class ClinicProfileEditScreen extends StatefulWidget {
@@ -15,6 +17,8 @@ class ClinicProfileEditScreen extends StatefulWidget {
 
 class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
   bool _isLoading = false;
+  bool _isUploadingPhoto = false;
+  String? _logoUrl;
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
@@ -29,6 +33,7 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
     super.initState();
     final profile = widget.profileData;
     
+    _logoUrl = profile?['logoUrl'];
     _nameController = TextEditingController(text: profile?['name'] ?? '');
     _phoneController = TextEditingController(text: profile?['phone'] ?? '');
     _emailController = TextEditingController(text: profile?['email'] ?? '');
@@ -90,6 +95,33 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
     }
   }
 
+  Future<void> _handlePhotoUpload() async {
+    final file = await ImageUploadService.pickImage(context);
+    if (file == null) return;
+
+    setState(() => _isUploadingPhoto = true);
+
+    try {
+      final newPhotoUrl = await ImageUploadService.uploadProfilePhoto(file, '/clinics/logo');
+      if (newPhotoUrl != null && mounted) {
+        setState(() {
+          _logoUrl = newPhotoUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Klinik logosu başarıyla güncellendi!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Logo yüklenemedi.'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,6 +135,56 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            Center(
+              child: Stack(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: _logoUrl != null
+                          ? ClipOval(
+                              child: Image.network(
+                                'http://10.0.2.2:5295${_logoUrl}',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.local_hospital, size: 50, color: AppTheme.primaryColor),
+                              ),
+                            )
+                          : const Icon(Icons.local_hospital, size: 50, color: AppTheme.primaryColor),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _isUploadingPhoto ? null : _handlePhotoUpload,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: _isUploadingPhoto
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: Padding(

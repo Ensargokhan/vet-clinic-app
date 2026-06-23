@@ -15,4 +15,5 @@ public interface IVetService
     Task<bool> UpdateMyScheduleAsync(string firebaseUid, List<UpdateVetScheduleRequest> schedules);
     Task<VetResponse?> GetVetProfileAsync(string firebaseUid);
     Task<VetResponse?> UpdateVetProfileAsync(string firebaseUid, UpdateVetProfileRequest request);
+    Task<string?> UpdateVetProfilePhotoAsync(string firebaseUid, string photoUrl);
 }

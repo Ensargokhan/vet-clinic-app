@@ -201,10 +201,15 @@ class _VetDashboardScreenState extends State<VetDashboardScreen> {
                         // Welcome Section
                         Row(
                           children: [
-                            const CircleAvatar(
+                            CircleAvatar(
                               radius: 30,
-                              backgroundColor: AppTheme.primaryColor,
-                              child: Icon(Icons.person, color: Colors.white, size: 30),
+                              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                              backgroundImage: _dashboardData?['profilePhoto'] != null 
+                                  ? NetworkImage('http://10.0.2.2:5295${_dashboardData?['profilePhoto']}') 
+                                  : null,
+                              child: _dashboardData?['profilePhoto'] == null 
+                                  ? const Icon(Icons.person, color: AppTheme.primaryColor, size: 30)
+                                  : null,
                             ),
                             const SizedBox(width: 16),
                             Expanded(

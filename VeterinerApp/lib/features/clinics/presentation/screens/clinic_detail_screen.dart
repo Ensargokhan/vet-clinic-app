@@ -104,9 +104,14 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
                     child: Card(
                       child: ListTile(
-                        leading: const CircleAvatar(
+                        leading: CircleAvatar(
                           backgroundColor: AppTheme.backgroundColor,
-                          child: Icon(Icons.person, color: AppTheme.primaryColor),
+                          backgroundImage: vet.profilePhoto != null
+                              ? NetworkImage('http://10.0.2.2:5295${vet.profilePhoto}')
+                              : null,
+                          child: vet.profilePhoto == null
+                              ? const Icon(Icons.person, color: AppTheme.primaryColor)
+                              : null,
                         ),
                         title: Text(vet.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(vet.title ?? vet.specialty ?? 'Veteriner Hekim'),

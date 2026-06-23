@@ -109,7 +109,12 @@ class _VetProfileScreenState extends State<VetProfileScreen> {
                         child: CircleAvatar(
                           radius: 50,
                           backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                          child: const Icon(Icons.person, size: 50, color: AppTheme.primaryColor),
+                          backgroundImage: _profile?['profilePhoto'] != null 
+                              ? NetworkImage('http://10.0.2.2:5295${_profile?['profilePhoto']}') 
+                              : null,
+                          child: _profile?['profilePhoto'] == null 
+                              ? const Icon(Icons.person, size: 50, color: AppTheme.primaryColor)
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 16),

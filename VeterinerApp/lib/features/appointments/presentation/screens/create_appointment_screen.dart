@@ -286,7 +286,12 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                       contentPadding: const EdgeInsets.all(12),
                       leading: CircleAvatar(
                         backgroundColor: isSelected ? AppTheme.primaryColor : Colors.grey.shade200,
-                        child: Icon(Icons.person, color: isSelected ? Colors.white : Colors.grey.shade600),
+                        backgroundImage: vet['profilePhoto'] != null 
+                            ? NetworkImage('http://10.0.2.2:5295${vet['profilePhoto']}') 
+                            : null,
+                        child: vet['profilePhoto'] == null 
+                            ? Icon(Icons.person, color: isSelected ? Colors.white : Colors.grey.shade600)
+                            : null,
                       ),
                       title: Text(vet['fullName'] ?? '', style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                       subtitle: Text(vet['specialty'] ?? vet['title'] ?? ''),

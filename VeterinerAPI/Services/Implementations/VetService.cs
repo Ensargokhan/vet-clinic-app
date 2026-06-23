@@ -119,7 +119,8 @@ public class VetService : IVetService
             FullName = user?.FullName ?? "",
             Title = vet.Title,
             Specialty = vet.Specialty,
-            ClinicName = clinic?.Name ?? "",
+            ProfilePhoto = vet.ProfilePhoto,
+            ClinicName = clinic?.Name ?? "Bilinmiyor",
             TodayAppointmentCount = todayCount,
             PendingAppointmentCount = pendingCount,
             TotalAppointmentCount = totalCount,
@@ -241,5 +242,19 @@ public class VetService : IVetService
         await _context.SaveChangesAsync();
         
         return await GetVetProfileAsync(firebaseUid);
+    }
+
+    public async Task<string?> UpdateVetProfilePhotoAsync(string firebaseUid, string photoUrl)
+    {
+        var vet = await GetVetAsync(firebaseUid);
+        
+        var oldPhotoUrl = vet.ProfilePhoto;
+        vet.ProfilePhoto = photoUrl;
+        vet.UpdatedAt = DateTime.UtcNow;
+
+        _vetRepository.Update(vet);
+        await _context.SaveChangesAsync();
+
+        return oldPhotoUrl;
     }
 }

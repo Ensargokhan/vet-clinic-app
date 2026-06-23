@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/image_upload_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -16,8 +17,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   String _email = '';
+  String? _profilePhotoUrl;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isUploadingPhoto = false;
 
   @override
   void initState() {
@@ -43,6 +46,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _nameController.text = data['fullName'] ?? '';
           _phoneController.text = data['phone'] ?? '';
           _email = data['email'] ?? '';
+          _profilePhotoUrl = data['profilePhoto'];
           _isLoading = false;
         });
       }
@@ -96,6 +100,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _handlePhotoUpload() async {
+    final file = await ImageUploadService.pickImage(context);
+    if (file == null) return;
+
+    setState(() => _isUploadingPhoto = true);
+
+    try {
+      final newPhotoUrl = await ImageUploadService.uploadProfilePhoto(file, '/auth/profile-photo');
+      if (newPhotoUrl != null && mounted) {
+        setState(() {
+          _profilePhotoUrl = newPhotoUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profil fotoğrafı başarıyla güncellendi!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fotoğraf yüklenemedi.'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,38 +165,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: Center(
-                              child: Text(
-                                _getInitials(_nameController.text),
-                                style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
-                                ),
-                              ),
+                              child: _profilePhotoUrl != null
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        'http://10.0.2.2:5295${_profilePhotoUrl}',
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Text(
+                                          _getInitials(_nameController.text),
+                                          style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      _getInitials(_nameController.text),
+                                      style: TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.primaryColor,
+                                      ),
+                                    ),
                             ),
                           ),
                           Positioned(
                             bottom: 0,
                             right: 0,
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
+                            child: GestureDetector(
+                              onTap: _isUploadingPhoto ? null : _handlePhotoUpload,
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: _isUploadingPhoto
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.camera_alt, color: Colors.white, size: 16),
                               ),
-                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Text(
-                        'Fotoğraf değiştirme yakında eklenecek',
-                        style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                       ),
                     ),
                     const SizedBox(height: 32),

@@ -17,4 +17,5 @@ public interface IClinicService
     Task<object> RemoveVetFromClinicAsync(string firebaseUid, int vetId);
     Task<IEnumerable<object>> GetClinicAppointmentsAsync(string firebaseUid);
     Task<bool> UpdateClinicAppointmentStatusAsync(string firebaseUid, int appointmentId, string newStatus, string? notes);
+    Task<string?> UpdateClinicLogoAsync(string firebaseUid, string logoUrl);
 }

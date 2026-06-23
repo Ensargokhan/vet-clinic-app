@@ -254,6 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final name = _userProfile?['fullName'] ?? 'Kullanıcı';
     final email = _userProfile?['email'] ?? '';
     final role = _userProfile?['role'] ?? 'owner';
+    final profilePhoto = _userProfile?['profilePhoto'];
     final roleText = role == 'owner' ? 'Hayvan Sahibi' : role == 'vet' ? 'Veteriner' : 'Yönetici';
 
     return Container(
@@ -307,14 +308,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    _getInitials(name),
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
+                  child: profilePhoto != null
+                      ? ClipOval(
+                          child: Image.network(
+                            'http://10.0.2.2:5295$profilePhoto',
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Text(
+                              _getInitials(name),
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Text(
+                          _getInitials(name),
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),

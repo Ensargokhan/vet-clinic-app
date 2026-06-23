@@ -13,10 +13,12 @@ namespace VeterinerAPI.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IFileService _fileService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IFileService fileService)
     {
         _authService = authService;
+        _fileService = fileService;
     }
 
     [Authorize]
@@ -74,7 +76,7 @@ public class AuthController : ControllerBase
         {
             Success = true,
             Message = "Profil bilgileri getirildi.",
-            Data = new { user.Id, user.FullName, user.Email, user.Phone, user.Role }
+            Data = new { user.Id, user.FullName, user.Email, user.Phone, user.Role, user.ProfilePhoto }
         });
     }
 
@@ -94,7 +96,7 @@ public class AuthController : ControllerBase
         {
             Success = true,
             Message = "Profil başarıyla güncellendi.",
-            Data = new { user.Id, user.FullName, user.Email, user.Phone, user.Role }
+            Data = new { user.Id, user.FullName, user.Email, user.Phone, user.Role, user.ProfilePhoto }
         });
     }
 
@@ -112,6 +114,45 @@ public class AuthController : ControllerBase
             Success = true,
             Message = "Hesap başarıyla silindi ve tüm ilişkili işlemler pasife alındı."
         });
+    }
+
+    [Authorize]
+    [HttpPost("profile-photo")]
+    public async Task<IActionResult> UploadProfilePhoto(IFormFile file)
+    {
+        var firebaseUid = User.FindFirst("FirebaseUid")?.Value;
+        if (string.IsNullOrEmpty(firebaseUid))
+            return Unauthorized(new ApiResponse<object> { Success = false, Message = "Firebase kimlik doğrulaması başarısız." });
+
+        try
+        {
+            // Dosyayı kaydet
+            var photoUrl = await _fileService.UploadImageAsync(file, "profiles");
+
+            // DB'yi güncelle
+            var oldPhotoUrl = await _authService.UpdateProfilePhotoAsync(firebaseUid, photoUrl);
+
+            // Eski dosyayı sil
+            if (!string.IsNullOrEmpty(oldPhotoUrl))
+            {
+                _fileService.DeleteImage(oldPhotoUrl);
+            }
+
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Profil fotoğrafı başarıyla güncellendi.",
+                Data = new { profilePhoto = photoUrl }
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new ApiResponse<object> { Success = false, Message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new ApiResponse<object> { Success = false, Message = "Dosya yüklenirken bir hata oluştu: " + ex.Message });
+        }
     }
 
     [Authorize]

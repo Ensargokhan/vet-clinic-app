@@ -34,6 +34,7 @@ builder.Services.AddScoped<IVaccineRepository, VaccineRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
 // Services
+builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClinicService, ClinicService>();
 builder.Services.AddScoped<IVetService, VetService>();
@@ -162,7 +163,7 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
-    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';";
+    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' data: https:; frame-ancestors 'none';";
     // Sunucu bilgisini gizle
     context.Response.Headers.Remove("Server");
     context.Response.Headers.Remove("X-Powered-By");
@@ -176,6 +177,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseStaticFiles(); // wwwroot içindeki statik dosyaları (resimler vb.) sunmak için
 app.UseCors("AppCorsPolicy");
 app.UseRateLimiter(); // Rate limiting
 app.UseAuthentication();

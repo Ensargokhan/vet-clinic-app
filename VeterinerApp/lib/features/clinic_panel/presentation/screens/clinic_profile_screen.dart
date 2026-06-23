@@ -175,10 +175,15 @@ class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 40),
-                    const CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.local_hospital, size: 40, color: AppTheme.primaryColor),
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                      backgroundImage: _clinicProfile?['logoUrl'] != null 
+                          ? NetworkImage('http://10.0.2.2:5295${_clinicProfile?['logoUrl']}') 
+                          : null,
+                      child: _clinicProfile?['logoUrl'] == null 
+                          ? const Icon(Icons.local_hospital, size: 50, color: AppTheme.primaryColor)
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     Text(

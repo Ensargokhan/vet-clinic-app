@@ -237,7 +237,12 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                  child: Text(_getInitials(vet['fullName'] ?? ''), style: const TextStyle(fontSize: 24, color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                  backgroundImage: vet['profilePhoto'] != null
+                      ? NetworkImage('http://10.0.2.2:5295${vet['profilePhoto']}')
+                      : null,
+                  child: vet['profilePhoto'] == null
+                      ? Text(_getInitials(vet['fullName'] ?? ''), style: const TextStyle(fontSize: 24, color: AppTheme.primaryColor, fontWeight: FontWeight.bold))
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 Text(vet['fullName'] ?? '', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
@@ -364,7 +369,12 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                                 leading: CircleAvatar(
                                   radius: 28,
                                   backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                                  child: Text(_getInitials(name), style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                                  backgroundImage: vet['profilePhoto'] != null
+                                      ? NetworkImage('http://10.0.2.2:5295${vet['profilePhoto']}')
+                                      : null,
+                                  child: vet['profilePhoto'] == null
+                                      ? Text(_getInitials(name), style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold))
+                                      : null,
                                 ),
                                 title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Column(

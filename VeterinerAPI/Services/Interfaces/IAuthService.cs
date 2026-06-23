@@ -10,6 +10,7 @@ public interface IAuthService
     Task<User?> GetUserProfileAsync(string firebaseUid);
     Task<User> RegisterClinicAsync(string firebaseUid, RegisterClinicRequest request);
     Task<User> UpdateProfileAsync(string firebaseUid, UpdateProfileRequest request);
+    Task<string?> UpdateProfilePhotoAsync(string firebaseUid, string photoUrl);
     Task DeactivateUserAccountAsync(string firebaseUid);
     Task<object> GetUserStatsAsync(string firebaseUid);
 }

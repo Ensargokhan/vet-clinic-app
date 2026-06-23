@@ -50,3 +50,6 @@ AGENTS.md
 .packages
 build/
 *.iml
+
+# Uploaded Files
+VeterinerAPI/wwwroot/uploads/

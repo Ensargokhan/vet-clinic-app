@@ -12,10 +12,12 @@ namespace VeterinerAPI.Controllers;
 public class VetsController : ControllerBase
 {
     private readonly IVetService _vetService;
+    private readonly IFileService _fileService;
 
-    public VetsController(IVetService vetService)
+    public VetsController(IVetService vetService, IFileService fileService)
     {
         _vetService = vetService;
+        _fileService = fileService;
     }
 
     [HttpGet("{id}/schedule")]
@@ -116,5 +118,38 @@ public class VetsController : ControllerBase
 
         var profile = await _vetService.UpdateVetProfileAsync(firebaseUid, request);
         return Ok(new ApiResponse<object> { Success = true, Message = "Profil güncellendi.", Data = profile });
+    }
+
+    [HttpPost("profile-photo")]
+    public async Task<IActionResult> UploadProfilePhoto(IFormFile file)
+    {
+        var firebaseUid = User.FindFirstValue("FirebaseUid");
+        if (string.IsNullOrEmpty(firebaseUid)) return Unauthorized();
+
+        try
+        {
+            var photoUrl = await _fileService.UploadImageAsync(file, "profiles");
+            var oldPhotoUrl = await _vetService.UpdateVetProfilePhotoAsync(firebaseUid, photoUrl);
+
+            if (!string.IsNullOrEmpty(oldPhotoUrl))
+            {
+                _fileService.DeleteImage(oldPhotoUrl);
+            }
+
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Profil fotoğrafı başarıyla güncellendi.",
+                Data = new { profilePhoto = photoUrl }
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new ApiResponse<object> { Success = false, Message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new ApiResponse<object> { Success = false, Message = "Dosya yüklenirken bir hata oluştu: " + ex.Message });
+        }
     }
 }

@@ -6,6 +6,7 @@ public class VetDashboardResponse
     public string FullName { get; set; } = string.Empty;
     public string? Title { get; set; }
     public string? Specialty { get; set; }
+    public string? ProfilePhoto { get; set; }
     public string ClinicName { get; set; } = string.Empty;
     public int TodayAppointmentCount { get; set; }
     public int PendingAppointmentCount { get; set; }

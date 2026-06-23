@@ -12,10 +12,12 @@ namespace VeterinerAPI.Controllers;
 public class ClinicsController : ControllerBase
 {
     private readonly IClinicService _clinicService;
+    private readonly IFileService _fileService;
 
-    public ClinicsController(IClinicService clinicService)
+    public ClinicsController(IClinicService clinicService, IFileService fileService)
     {
         _clinicService = clinicService;
+        _fileService = fileService;
     }
 
     [HttpGet]
@@ -113,5 +115,38 @@ public class ClinicsController : ControllerBase
 
         await _clinicService.UpdateClinicAppointmentStatusAsync(firebaseUid, id, request.Status, request.Notes);
         return Ok(new ApiResponse<object> { Success = true, Message = "Randevu durumu güncellendi." });
+    }
+
+    [HttpPost("logo")]
+    public async Task<IActionResult> UploadClinicLogo(IFormFile file)
+    {
+        var firebaseUid = User.FindFirstValue("FirebaseUid");
+        if (string.IsNullOrEmpty(firebaseUid)) return Unauthorized();
+
+        try
+        {
+            var photoUrl = await _fileService.UploadImageAsync(file, "clinics");
+            var oldPhotoUrl = await _clinicService.UpdateClinicLogoAsync(firebaseUid, photoUrl);
+
+            if (!string.IsNullOrEmpty(oldPhotoUrl))
+            {
+                _fileService.DeleteImage(oldPhotoUrl);
+            }
+
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Klinik logosu başarıyla güncellendi.",
+                Data = new { logoUrl = photoUrl }
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new ApiResponse<object> { Success = false, Message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new ApiResponse<object> { Success = false, Message = "Dosya yüklenirken bir hata oluştu: " + ex.Message });
+        }
     }
 }
