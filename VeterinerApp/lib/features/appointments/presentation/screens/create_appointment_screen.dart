@@ -172,7 +172,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context); // Close dialog
-                  context.go('/home'); // Go to main screen
+                  context.go('/appointments'); // Go to appointments screen
                 },
                 child: const Text('Randevularıma Git'),
               ),
