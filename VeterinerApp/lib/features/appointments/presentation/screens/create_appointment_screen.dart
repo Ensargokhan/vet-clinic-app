@@ -73,6 +73,12 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
       if (response.data['success']) {
         setState(() {
           _clinicVets = response.data['data']['vets'] ?? [];
+          if (_selectedVetId != null && _selectedVetInfo == null) {
+            final matches = _clinicVets.where((v) => v['id'] == _selectedVetId);
+            if (matches.isNotEmpty) {
+              _selectedVetInfo = matches.first;
+            }
+          }
         });
       }
     } catch (e) {
