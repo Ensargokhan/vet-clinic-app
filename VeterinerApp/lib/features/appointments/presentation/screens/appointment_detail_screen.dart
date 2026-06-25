@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/appointment_status.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/error_state.dart';
+import '../../../../shared/widgets/info_row.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
 
 class AppointmentDetailScreen extends StatefulWidget {
   final int appointmentId;
@@ -25,6 +31,10 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
   }
 
   Future<void> _fetchAppointment() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final dio = DioClient().dio;
       final response = await dio.get('/appointments/${widget.appointmentId}');
@@ -46,15 +56,14 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Randevuyu İptal Et'),
         content: const Text('Bu randevuyu iptal etmek istediğinize emin misiniz?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: ctx.scheme.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('İptal Et', style: TextStyle(color: Colors.white)),
+            child: const Text('İptal Et'),
           ),
         ],
       ),
@@ -67,14 +76,20 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
       await dio.put('/appointments/${widget.appointmentId}/cancel');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Randevu iptal edildi.'), backgroundColor: Colors.green),
+          SnackBar(
+            content: const Text('Randevu iptal edildi.'),
+            backgroundColor: context.colors.success,
+          ),
         );
-        _fetchAppointment(); // Refresh
+        _fetchAppointment();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('İptal işlemi başarısız.'), backgroundColor: Colors.red),
+          SnackBar(
+            content: const Text('İptal işlemi başarısız.'),
+            backgroundColor: context.scheme.error,
+          ),
         );
       }
     }
@@ -83,16 +98,11 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text('Randevu Detayı', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Randevu Detayı')),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          ? const LoadingIndicator()
           : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+              ? ErrorState(message: _error!, onRetry: _fetchAppointment)
               : _buildContent(),
     );
   }
@@ -102,153 +112,95 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
 
     final appt = _appointment!;
     final date = DateTime.parse(appt['appointmentDate']);
-    final status = appt['status'] ?? 'pending';
+    final status = appt['status']?.toString() ?? 'pending';
     final isPending = status == 'pending';
+    final statusColor = AppointmentStatus.color(context, status);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status Banner
+          // Durum başlığı
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: _statusGradient(status),
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
+              color: statusColor.withOpacity(0.12),
+              borderRadius: AppRadius.lgAll,
             ),
             child: Column(
               children: [
-                Icon(_statusIcon(status), color: Colors.white, size: 48),
-                const SizedBox(height: 12),
+                Icon(AppointmentStatus.icon(status), color: statusColor, size: 48),
+                const SizedBox(height: AppSpacing.md),
                 Text(
-                  _statusText(status),
-                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+                  AppointmentStatus.label(status),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(color: statusColor),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   DateFormat('dd MMMM yyyy, HH:mm', 'tr_TR').format(date),
-                  style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.lg),
 
-          // Info Cards
-          _buildInfoCard(
-            icon: Icons.pets,
-            title: 'Hasta',
-            value: appt['animalName'] ?? 'Bilinmiyor',
-          ),
-          _buildInfoCard(
-            icon: Icons.person,
-            title: 'Veteriner Hekim',
-            value: appt['vetName'] ?? 'Bilinmiyor',
-          ),
-          _buildInfoCard(
-            icon: Icons.access_time,
-            title: 'Süre',
-            value: '${appt['durationMinutes'] ?? 30} dakika',
-          ),
-          if (appt['reason'] != null && appt['reason'].toString().isNotEmpty)
-            _buildInfoCard(
-              icon: Icons.description,
-              title: 'Sebep',
-              value: appt['reason'],
+          AppCard(
+            child: Column(
+              children: [
+                InfoRow(
+                  icon: Icons.pets,
+                  label: 'Hasta',
+                  value: appt['animalName']?.toString() ?? 'Bilinmiyor',
+                ),
+                InfoRow(
+                  icon: Icons.medical_services_outlined,
+                  label: 'Veteriner Hekim',
+                  value: appt['vetName']?.toString() ?? 'Bilinmiyor',
+                ),
+                InfoRow(
+                  icon: Icons.access_time,
+                  label: 'Süre',
+                  value: '${appt['durationMinutes'] ?? 30} dakika',
+                ),
+                if (appt['reason'] != null && appt['reason'].toString().isNotEmpty)
+                  InfoRow(
+                    icon: Icons.description_outlined,
+                    label: 'Sebep',
+                    value: appt['reason'].toString(),
+                  ),
+                if (appt['notes'] != null && appt['notes'].toString().isNotEmpty)
+                  InfoRow(
+                    icon: Icons.notes_outlined,
+                    label: 'Notlar',
+                    value: appt['notes'].toString(),
+                  ),
+              ],
             ),
-          if (appt['notes'] != null && appt['notes'].toString().isNotEmpty)
-            _buildInfoCard(
-              icon: Icons.note,
-              title: 'Notlar',
-              value: appt['notes'],
-            ),
+          ),
 
-          const SizedBox(height: 32),
-
-          // Cancel Button
-          if (isPending)
+          if (isPending) ...[
+            const SizedBox(height: AppSpacing.xl),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: _cancelAppointment,
-                icon: const Icon(Icons.cancel_outlined, color: Colors.red),
-                label: const Text('Randevuyu İptal Et', style: TextStyle(color: Colors.red, fontSize: 16)),
+                icon: const Icon(Icons.cancel_outlined),
+                label: const Text('Randevuyu İptal Et'),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  foregroundColor: context.scheme.error,
+                  side: BorderSide(color: context.scheme.error),
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
-  }
-
-  Widget _buildInfoCard({required IconData icon, required String title, required String value}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppTheme.primaryColor, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Color> _statusGradient(String status) {
-    switch (status) {
-      case 'completed': return [Colors.green.shade400, Colors.green.shade700];
-      case 'cancelled': return [Colors.red.shade400, Colors.red.shade700];
-      default: return [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.7)];
-    }
-  }
-
-  IconData _statusIcon(String status) {
-    switch (status) {
-      case 'completed': return Icons.check_circle;
-      case 'cancelled': return Icons.cancel;
-      default: return Icons.schedule;
-    }
-  }
-
-  String _statusText(String status) {
-    switch (status) {
-      case 'completed': return 'Tamamlandı';
-      case 'cancelled': return 'İptal Edildi';
-      default: return 'Beklemede';
-    }
   }
 }

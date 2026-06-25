@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/utils/appointment_status.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../../shared/widgets/status_badge.dart';
 import '../../data/models/appointment_model.dart';
 
 class AppointmentsScreen extends StatefulWidget {
@@ -45,14 +51,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Randevularım', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          bottom: const TabBar(
-            labelColor: AppTheme.primaryColor,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: AppTheme.primaryColor,
-            tabs: [
+          title: const Text('Randevularım'),
+          bottom: TabBar(
+            labelColor: context.scheme.primary,
+            unselectedLabelColor: context.colors.textSecondary,
+            indicatorColor: context.scheme.primary,
+            tabs: const [
               Tab(text: 'Yaklaşanlar'),
               Tab(text: 'Geçmiş'),
             ],
@@ -64,101 +68,101 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading) return const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor));
+    if (_isLoading) return const LoadingIndicator();
 
-    final upcomingAppointments = _appointments.where((a) => a.status == 'pending' || a.status == 'confirmed').toList();
-    upcomingAppointments.sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
+    final upcoming = _appointments
+        .where((a) => a.status == 'pending' || a.status == 'confirmed')
+        .toList()
+      ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
 
-    final pastAppointments = _appointments.where((a) => a.status != 'pending' && a.status != 'confirmed').toList();
-    pastAppointments.sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
+    final past = _appointments
+        .where((a) => a.status != 'pending' && a.status != 'confirmed')
+        .toList()
+      ..sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
 
     return TabBarView(
       children: [
-        _buildList(upcomingAppointments, 'Yaklaşan randevunuz bulunmuyor.'),
-        _buildList(pastAppointments, 'Geçmiş randevunuz bulunmuyor.'),
+        _buildList(upcoming, 'Yaklaşan randevunuz bulunmuyor.'),
+        _buildList(past, 'Geçmiş randevunuz bulunmuyor.'),
       ],
     );
   }
 
   Widget _buildList(List<AppointmentModel> list, String emptyMessage) {
     if (list.isEmpty) {
-      return Center(child: Text(emptyMessage));
+      return EmptyState(icon: Icons.event_busy_outlined, message: emptyMessage);
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: list.length,
-      itemBuilder: (context, index) {
-        final appt = list[index];
-        final date = DateFormat('dd MMM yyyy, HH:mm').format(appt.appointmentDate);
-        
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => context.push('/appointments/${appt.id}'),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              leading: CircleAvatar(
-                backgroundColor: appt.status == 'cancelled' || appt.status == 'expired' || appt.status == 'no_show'
-                    ? Colors.red.withOpacity(0.1) 
-                    : AppTheme.primaryColor.withOpacity(0.1),
-                child: Icon(
-                  Icons.calendar_today,
-                  color: appt.status == 'cancelled' || appt.status == 'expired' || appt.status == 'no_show' 
-                      ? Colors.red 
-                      : AppTheme.primaryColor,
-                ),
-              ),
-              title: Text(date, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (appt.animalName != null) Text('🐾 ${appt.animalName}'),
-                  if (appt.vetName != null) Text('👨‍⚕️ ${appt.vetName}'),
-                  if (appt.reason != null && appt.reason!.isNotEmpty) Text('📋 ${appt.reason}'),
-                ],
-              ),
-              trailing: _buildStatusChip(appt.status),
-            ),
-          ),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: _fetchAppointments,
+      color: context.scheme.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        itemCount: list.length,
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+        itemBuilder: (context, index) => _appointmentCard(list[index]),
+      ),
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    Color color;
-    String text;
-    switch (status) {
-      case 'confirmed':
-        color = Colors.blue;
-        text = 'Onaylandı';
-        break;
-      case 'completed':
-        color = Colors.green;
-        text = 'Tamamlandı';
-        break;
-      case 'cancelled':
-        color = Colors.red;
-        text = 'İptal Edildi';
-        break;
-      case 'expired':
-        color = Colors.grey;
-        text = 'Süresi Doldu';
-        break;
-      case 'no_show':
-        color = Colors.orange.shade700;
-        text = 'Gidilmedi';
-        break;
-      default:
-        color = Colors.orange;
-        text = 'Bekliyor';
-    }
-    return Chip(
-      label: Text(text, style: const TextStyle(color: Colors.white, fontSize: 12)),
-      backgroundColor: color,
+  Widget _appointmentCard(AppointmentModel appt) {
+    final date = DateFormat('dd MMM yyyy, HH:mm', 'tr_TR').format(appt.appointmentDate);
+    final statusColor = AppointmentStatus.color(context, appt.status);
+
+    return AppCard(
+      onTap: () => context.push('/appointments/${appt.id}'),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.12),
+              borderRadius: AppRadius.mdAll,
+            ),
+            child: Icon(Icons.calendar_today_outlined, color: statusColor, size: 20),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(date, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: AppSpacing.sm),
+                if (appt.animalName != null)
+                  _metaRow(Icons.pets, appt.animalName!),
+                if (appt.vetName != null)
+                  _metaRow(Icons.medical_services_outlined, appt.vetName!),
+                if (appt.reason != null && appt.reason!.isNotEmpty)
+                  _metaRow(Icons.notes_outlined, appt.reason!),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          StatusBadge(appt.status),
+        ],
+      ),
+    );
+  }
+
+  Widget _metaRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: context.colors.textSecondary),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

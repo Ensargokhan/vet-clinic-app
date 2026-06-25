@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.pets, size: 64, color: AppTheme.primaryColor),
+                  Icon(Icons.pets, size: 64, color: context.scheme.primary),
                   const SizedBox(height: 24),
                   Text(
                     'Tekrar Hoş Geldiniz! 👋',
@@ -137,14 +137,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         // Şifremi unuttum akışı
                       },
-                      child: const Text('Şifremi Unuttum', style: TextStyle(color: AppTheme.primaryColor)),
+                      child: const Text('Şifremi Unuttum'),
                     ),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
                     child: _isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: context.scheme.onPrimary, strokeWidth: 2))
                         : const Text('Giriş Yap'),
                   ),
                   const SizedBox(height: 24),
@@ -164,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: const Icon(Icons.business_center_outlined, size: 20),
                     label: const Text('Kurumsal Kayıt (Klinikler İçin)'),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.secondaryColor,
+                      foregroundColor: context.colors.info,
                     ),
                   ),
                 ],

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/dio_client.dart';
 import 'package:dio/dio.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/error_state.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
 
 class VetScheduleScreen extends StatefulWidget {
   const VetScheduleScreen({super.key});
@@ -16,8 +21,7 @@ class _VetScheduleScreenState extends State<VetScheduleScreen> {
   bool _isSaving = false;
 
   final List<String> _days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
-  
-  // Each schedule item is a map: { dayOfWeek: 0..6, startTime: '09:00', endTime: '17:00', slotDuration: 30, isActive: true }
+
   List<Map<String, dynamic>> _schedules = [];
 
   @override
@@ -35,11 +39,8 @@ class _VetScheduleScreenState extends State<VetScheduleScreen> {
     try {
       final dio = DioClient().dio;
       final response = await dio.get('/vets/my-schedule');
-
       if (response.data['success'] == true) {
         final List<dynamic> data = response.data['data'] ?? [];
-        
-        // Initialize default schedules for all 7 days
         List<Map<String, dynamic>> loadedSchedules = [];
         for (int i = 0; i < 7; i++) {
           final existing = data.firstWhere((s) => s['dayOfWeek'] == i, orElse: () => null);
@@ -49,7 +50,7 @@ class _VetScheduleScreenState extends State<VetScheduleScreen> {
               'startTime': existing['startTime'],
               'endTime': existing['endTime'],
               'slotDuration': existing['slotDuration'] ?? 30,
-              'isActive': existing['isActive'] ?? true, // we might need to rely on start/end logic if isActive not strictly given
+              'isActive': existing['isActive'] ?? true,
             });
           } else {
             loadedSchedules.add({
@@ -61,7 +62,6 @@ class _VetScheduleScreenState extends State<VetScheduleScreen> {
             });
           }
         }
-        
         setState(() {
           _schedules = loadedSchedules;
           _isLoading = false;
@@ -85,16 +85,21 @@ class _VetScheduleScreenState extends State<VetScheduleScreen> {
     try {
       final dio = DioClient().dio;
       await dio.put('/vets/my-schedule', data: _schedules);
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Program başarıyla kaydedildi.'), backgroundColor: Colors.green),
+          SnackBar(
+            content: const Text('Program başarıyla kaydedildi.'),
+            backgroundColor: context.colors.success,
+          ),
         );
       }
     } on DioException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.response?.data?['message'] ?? 'Hata oluştu'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(e.response?.data?['message'] ?? 'Hata oluştu'),
+            backgroundColor: context.scheme.error,
+          ),
         );
       }
     } finally {
@@ -111,19 +116,12 @@ class _VetScheduleScreenState extends State<VetScheduleScreen> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: currentHour, minute: currentMin),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(primary: AppTheme.primaryColor),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
       setState(() {
-        final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}:00';
+        final formattedTime =
+            '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}:00';
         if (isStart) {
           _schedules[dayIndex]['startTime'] = formattedTime;
         } else {
@@ -136,150 +134,127 @@ class _VetScheduleScreenState extends State<VetScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text('Programım', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: const Text('Programım'),
         actions: [
           if (!_isLoading && _errorMessage == null)
             Padding(
-              padding: const EdgeInsets.only(right: 8.0),
+              padding: const EdgeInsets.only(right: AppSpacing.sm),
               child: _isSaving
-                  ? const Center(child: Padding(padding: EdgeInsets.all(16.0), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))))
+                  ? const Padding(
+                      padding: EdgeInsets.all(AppSpacing.lg),
+                      child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                    )
                   : TextButton.icon(
                       onPressed: _saveSchedule,
-                      icon: const Icon(Icons.save, color: AppTheme.primaryColor),
-                      label: const Text('Kaydet', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                      icon: const Icon(Icons.save),
+                      label: const Text('Kaydet'),
                     ),
             ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          ? const LoadingIndicator()
           : _errorMessage != null
-              ? Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+              ? ErrorState(message: _errorMessage!, onRetry: _loadSchedule)
+              : ListView.separated(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   itemCount: 7,
+                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
                   itemBuilder: (context, index) {
-                    // Monday is index 1 in the list of days but we might want to display Monday first
-                    // Let's just map 0-6 properly (0=Sunday ... 6=Saturday)
-                    // Visual order: Monday(1) to Sunday(0)
                     int dayIndex = index + 1;
-                    if (dayIndex == 7) dayIndex = 0; // Sunday at the end
+                    if (dayIndex == 7) dayIndex = 0;
 
                     final schedule = _schedules.firstWhere((s) => s['dayOfWeek'] == dayIndex);
                     final isActive = schedule['isActive'] ?? false;
-                    
-                    String startStr = schedule['startTime'].toString().substring(0, 5); // 09:00
-                    String endStr = schedule['endTime'].toString().substring(0, 5);
+                    final startStr = schedule['startTime'].toString().substring(0, 5);
+                    final endStr = schedule['endTime'].toString().substring(0, 5);
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
+                    return AppCard(
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(_days[dayIndex],
+                                  style: Theme.of(context).textTheme.titleMedium),
+                              Switch(
+                                value: isActive,
+                                onChanged: (val) => setState(() => schedule['isActive'] = val),
+                              ),
+                            ],
+                          ),
+                          if (isActive) ...[
+                            const Divider(),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  _days[dayIndex],
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                Expanded(
+                                  child: _timeBox('Başlangıç', startStr,
+                                      () => _selectTime(context, dayIndex, true)),
                                 ),
-                                Switch(
-                                  value: isActive,
-                                  activeColor: AppTheme.primaryColor,
-                                  onChanged: (val) {
-                                    setState(() {
-                                      schedule['isActive'] = val;
-                                    });
-                                  },
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                  child: Icon(Icons.arrow_forward, color: context.colors.textSecondary),
+                                ),
+                                Expanded(
+                                  child: _timeBox('Bitiş', endStr,
+                                      () => _selectTime(context, dayIndex, false)),
                                 ),
                               ],
                             ),
-                            if (isActive) ...[
-                              const Divider(),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: () => _selectTime(context, dayIndex, true),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[100],
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            const Text('Başlangıç', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                            const SizedBox(height: 4),
-                                            Text(startStr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
+                            const SizedBox(height: AppSpacing.md),
+                            Row(
+                              children: [
+                                Text('Randevu Süresi:',
+                                    style: Theme.of(context).textTheme.bodyMedium),
+                                const SizedBox(width: AppSpacing.lg),
+                                Expanded(
+                                  child: DropdownButton<int>(
+                                    value: schedule['slotDuration'],
+                                    isExpanded: true,
+                                    items: const [
+                                      DropdownMenuItem(value: 15, child: Text('15 Dakika')),
+                                      DropdownMenuItem(value: 20, child: Text('20 Dakika')),
+                                      DropdownMenuItem(value: 30, child: Text('30 Dakika')),
+                                      DropdownMenuItem(value: 45, child: Text('45 Dakika')),
+                                      DropdownMenuItem(value: 60, child: Text('60 Dakika')),
+                                    ],
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() => schedule['slotDuration'] = val);
+                                      }
+                                    },
                                   ),
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 16),
-                                    child: Icon(Icons.arrow_forward, color: Colors.grey),
-                                  ),
-                                  Expanded(
-                                    child: InkWell(
-                                      onTap: () => _selectTime(context, dayIndex, false),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey[100],
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            const Text('Bitiş', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                                            const SizedBox(height: 4),
-                                            Text(endStr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  const Text('Randevu Süresi:', style: TextStyle(color: Colors.grey)),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: DropdownButton<int>(
-                                      value: schedule['slotDuration'],
-                                      isExpanded: true,
-                                      items: const [
-                                        DropdownMenuItem(value: 15, child: Text('15 Dakika')),
-                                        DropdownMenuItem(value: 20, child: Text('20 Dakika')),
-                                        DropdownMenuItem(value: 30, child: Text('30 Dakika')),
-                                        DropdownMenuItem(value: 45, child: Text('45 Dakika')),
-                                        DropdownMenuItem(value: 60, child: Text('60 Dakika')),
-                                      ],
-                                      onChanged: (val) {
-                                        if (val != null) {
-                                          setState(() => schedule['slotDuration'] = val);
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ]
+                                ),
+                              ],
+                            ),
                           ],
-                        ),
+                        ],
                       ),
                     );
                   },
                 ),
+    );
+  }
+
+  Widget _timeBox(String label, String value, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppRadius.smAll,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        decoration: BoxDecoration(
+          color: context.colors.surfaceAlt,
+          borderRadius: AppRadius.smAll,
+        ),
+        child: Column(
+          children: [
+            Text(label, style: Theme.of(context).textTheme.labelSmall),
+            const SizedBox(height: AppSpacing.xs),
+            Text(value, style: Theme.of(context).textTheme.titleMedium),
+          ],
+        ),
+      ),
     );
   }
 }

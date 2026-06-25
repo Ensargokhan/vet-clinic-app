@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_state.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
 import 'package:dio/dio.dart';
 
 class ClinicVetsScreen extends StatefulWidget {
@@ -219,14 +225,14 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hekim başarıyla eklendi!'), backgroundColor: Colors.green),
+          SnackBar(content: const Text('Hekim başarıyla eklendi!'), backgroundColor: context.colors.success),
         );
         _loadVets();
       }
     } on DioException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.response?.data?['message'] ?? 'Hata oluştu'), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.response?.data?['message'] ?? 'Hata oluştu'), backgroundColor: context.scheme.error),
         );
         setState(() => _isLoading = false);
       }
@@ -248,31 +254,34 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                  backgroundColor: context.scheme.primary.withOpacity(0.12),
                   backgroundImage: vet['profilePhoto'] != null
                       ? NetworkImage('http://10.0.2.2:5295${vet['profilePhoto']}')
                       : null,
                   child: vet['profilePhoto'] == null
-                      ? Text(_getInitials(vet['fullName'] ?? ''), style: const TextStyle(fontSize: 24, color: AppTheme.primaryColor, fontWeight: FontWeight.bold))
+                      ? Text(_getInitials(vet['fullName'] ?? ''),
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: context.scheme.primary))
                       : null,
                 ),
-                const SizedBox(height: 16),
-                Text(vet['fullName'] ?? '', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                if (vet['title'] != null) Text(vet['title'], style: const TextStyle(fontSize: 16, color: AppTheme.primaryColor)),
-                if (vet['specialty'] != null) Text(vet['specialty'], style: const TextStyle(fontSize: 16, color: Colors.grey)),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.lg),
+                Text(vet['fullName'] ?? '', style: Theme.of(context).textTheme.titleLarge),
+                if (vet['title'] != null)
+                  Text(vet['title'],
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: context.scheme.primary)),
+                if (vet['specialty'] != null)
+                  Text(vet['specialty'], style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: AppSpacing.xl),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade50,
-                      foregroundColor: Colors.red,
-                      elevation: 0,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: context.scheme.error,
+                      side: BorderSide(color: context.scheme.error),
                     ),
                     icon: const Icon(Icons.delete_outline),
                     label: const Text('Hekimi Klinikden Sil'),
                     onPressed: () {
-                      Navigator.pop(context); // Close bottom sheet
+                      Navigator.pop(context);
                       _confirmDeleteVet(vet['id'], vet['fullName']);
                     },
                   ),
@@ -296,13 +305,13 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('İptal'),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: context.scheme.error),
             onPressed: () {
               Navigator.pop(context);
               _deleteVet(vetId);
             },
-            child: const Text('Sil', style: TextStyle(color: Colors.white)),
+            child: const Text('Sil'),
           ),
         ],
       ),
@@ -317,14 +326,14 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hekim başarıyla silindi!'), backgroundColor: Colors.green),
+          SnackBar(content: const Text('Hekim başarıyla silindi!'), backgroundColor: context.colors.success),
         );
         _loadVets();
       }
     } on DioException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.response?.data?['message'] ?? 'Silme işlemi başarısız oldu'), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.response?.data?['message'] ?? 'Silme işlemi başarısız oldu'), backgroundColor: context.scheme.error),
         );
         setState(() => _isLoading = false);
       }
@@ -340,64 +349,65 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text('Hekimlerim', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Hekimlerim')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddVetDialog,
-        backgroundColor: AppTheme.primaryColor,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Yeni Hekim', style: TextStyle(color: Colors.white)),
+        icon: const Icon(Icons.add),
+        label: const Text('Yeni Hekim'),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          ? const LoadingIndicator()
           : _errorMessage != null
-              ? Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)))
+              ? ErrorState(message: _errorMessage!, onRetry: _loadVets)
               : _vets.isEmpty
-                  ? const Center(child: Text('Henüz kayıtlı hekim bulunmuyor.'))
+                  ? const EmptyState(
+                      icon: Icons.group_outlined,
+                      message: 'Henüz kayıtlı hekim bulunmuyor.')
                   : RefreshIndicator(
                       onRefresh: _loadVets,
-                      color: AppTheme.primaryColor,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                      color: context.scheme.primary,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
                         itemCount: _vets.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
                         itemBuilder: (context, index) {
                           final vet = _vets[index];
                           final name = vet['fullName'] ?? '';
                           final title = vet['title'] ?? '';
                           final spec = vet['specialty'] ?? '';
+                          final primary = context.scheme.primary;
 
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () => _showVetDetails(vet),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.all(12),
-                                leading: CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                          return AppCard(
+                            onTap: () => _showVetDetails(vet),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 26,
+                                  backgroundColor: primary.withOpacity(0.12),
                                   backgroundImage: vet['profilePhoto'] != null
                                       ? NetworkImage('http://10.0.2.2:5295${vet['profilePhoto']}')
                                       : null,
                                   child: vet['profilePhoto'] == null
-                                      ? Text(_getInitials(name), style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold))
+                                      ? Text(_getInitials(name),
+                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: primary))
                                       : null,
                                 ),
-                                title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (title.isNotEmpty) Text(title, style: TextStyle(color: AppTheme.primaryColor)),
-                                    if (spec.isNotEmpty) Text(spec),
-                                  ],
+                                const SizedBox(width: AppSpacing.md),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(name, style: Theme.of(context).textTheme.titleMedium),
+                                      if (title.isNotEmpty)
+                                        Text(title,
+                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: primary)),
+                                      if (spec.isNotEmpty)
+                                        Text(spec, style: Theme.of(context).textTheme.bodyMedium),
+                                    ],
+                                  ),
                                 ),
-                                trailing: const Icon(Icons.more_vert, color: Colors.grey),
-                              ),
+                                Icon(Icons.more_vert, color: context.colors.textSecondary),
+                              ],
                             ),
                           );
                         },

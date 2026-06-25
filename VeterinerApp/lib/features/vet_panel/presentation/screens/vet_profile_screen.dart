@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/dio_client.dart';
 import 'package:dio/dio.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/error_state.dart';
+import '../../../../shared/widgets/info_row.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../../shared/widgets/menu_tile.dart';
+import '../../../../shared/widgets/section_header.dart';
+
+const String _imgBase = 'http://10.0.2.2:5295';
 
 class VetProfileScreen extends StatefulWidget {
   const VetProfileScreen({super.key});
@@ -32,7 +41,6 @@ class _VetProfileScreenState extends State<VetProfileScreen> {
     try {
       final dio = DioClient().dio;
       final response = await dio.get('/vets/my-profile');
-
       if (response.data['success'] == true) {
         setState(() {
           _profile = response.data['data'];
@@ -62,263 +70,171 @@ class _VetProfileScreenState extends State<VetProfileScreen> {
     try {
       final dio = DioClient().dio;
       await dio.delete('/auth/account');
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hesabınız başarıyla silindi.'), backgroundColor: Colors.green),
+          SnackBar(
+            content: const Text('Hesabınız başarıyla silindi.'),
+            backgroundColor: context.colors.success,
+          ),
         );
       }
-      
       await FirebaseAuth.instance.signOut();
       if (mounted) context.go('/login');
     } on DioException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.response?.data?['message'] ?? 'Hata oluştu'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(e.response?.data?['message'] ?? 'Hata oluştu'),
+            backgroundColor: context.scheme.error,
+          ),
         );
         setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Beklenmeyen hata: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Beklenmeyen hata: $e'), backgroundColor: context.scheme.error),
         );
         setState(() => _isLoading = false);
       }
     }
   }
 
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Çıkış Yap'),
+        content: const Text('Hesabınızdan çıkış yapmak istediğinize emin misiniz?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Vazgeç')),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _logout();
+            },
+            child: const Text('Çıkış Yap'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hesabı Sil'),
+        content: const Text(
+            'Hesabınızı silmek kalıcı bir işlemdir. Profil bilgileriniz silinecek ve aktif olan tüm randevularınız otomatik olarak iptal edilecektir. Bu işlemi onaylıyor musunuz?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Vazgeç')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: ctx.scheme.error),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteAccount();
+            },
+            child: const Text('Evet, Hesabımı Sil'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text('Profil', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Profil')),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          ? const LoadingIndicator()
           : _errorMessage != null
-              ? Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)))
+              ? ErrorState(message: _errorMessage!, onRetry: _loadProfile)
               : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     children: [
                       Center(
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                          backgroundImage: _profile?['profilePhoto'] != null 
-                              ? NetworkImage('http://10.0.2.2:5295${_profile?['profilePhoto']}') 
+                          backgroundColor: context.scheme.primary.withOpacity(0.12),
+                          backgroundImage: _profile?['profilePhoto'] != null
+                              ? NetworkImage('$_imgBase${_profile?['profilePhoto']}')
                               : null,
-                          child: _profile?['profilePhoto'] == null 
-                              ? const Icon(Icons.person, size: 50, color: AppTheme.primaryColor)
+                          child: _profile?['profilePhoto'] == null
+                              ? Icon(Icons.person, size: 48, color: context.scheme.primary)
                               : null,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _profile?['fullName'] ?? '',
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 32),
-                      Card(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Profil Bilgileri', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                              const Divider(),
-                              const SizedBox(height: 8),
-                              _buildInfoRow(Icons.badge, 'Unvan', _profile?['title'] ?? 'Belirtilmemiş'),
-                              const SizedBox(height: 16),
-                              _buildInfoRow(Icons.medical_services, 'Uzmanlık', _profile?['specialty'] ?? 'Belirtilmemiş'),
-                              const SizedBox(height: 16),
-                              _buildInfoRow(Icons.phone, 'Telefon', _profile?['phone'] ?? 'Belirtilmemiş'),
-                              const SizedBox(height: 16),
-                              _buildInfoRow(Icons.info, 'Hakkında', _profile?['bio'] ?? 'Açıklama bulunmuyor.'),
-                              const SizedBox(height: 8),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(_profile?['fullName'] ?? '',
+                          style: Theme.of(context).textTheme.headlineMedium),
+                      const SizedBox(height: AppSpacing.xl),
+                      AppCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SectionHeader('Profil Bilgileri'),
+                            const Divider(),
+                            InfoRow(
+                                icon: Icons.badge_outlined,
+                                label: 'Unvan',
+                                value: _profile?['title'] ?? 'Belirtilmemiş'),
+                            InfoRow(
+                                icon: Icons.medical_services_outlined,
+                                label: 'Uzmanlık',
+                                value: _profile?['specialty'] ?? 'Belirtilmemiş'),
+                            InfoRow(
+                                icon: Icons.phone_outlined,
+                                label: 'Telefon',
+                                value: _profile?['phone'] ?? 'Belirtilmemiş'),
+                            InfoRow(
+                                icon: Icons.info_outline,
+                                label: 'Hakkında',
+                                value: _profile?['bio'] ?? 'Açıklama bulunmuyor.'),
                           ],
                         ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      AppCard(
+                        padding: EdgeInsets.zero,
                         child: Column(
                           children: [
-                            _buildMenuItem(
+                            MenuTile(
                               icon: Icons.edit_outlined,
                               title: 'Profili Düzenle',
                               subtitle: 'Bilgilerinizi güncelleyin',
                               onTap: () {
-                                context.push('/vet/profile/edit', extra: _profile).then((_) => _loadProfile());
+                                context
+                                    .push('/vet/profile/edit', extra: _profile)
+                                    .then((_) => _loadProfile());
                               },
                             ),
-                            _buildDivider(),
-                            _buildMenuItem(
+                            const Divider(height: 1),
+                            MenuTile(
                               icon: Icons.logout,
                               title: 'Çıkış Yap',
                               subtitle: 'Hesabınızdan güvenli çıkış yapın',
-                              iconColor: Colors.grey.shade600,
-                              titleColor: Colors.grey.shade600,
-                              showArrow: false,
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Çıkış Yap'),
-                                    content: const Text('Hesabınızdan çıkış yapmak istediğinize emin misiniz?'),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Vazgeç')),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          _logout();
-                                        },
-                                        child: const Text('Çıkış Yap', style: TextStyle(color: Colors.white)),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                              iconColor: context.colors.textSecondary,
+                              trailing: const SizedBox.shrink(),
+                              onTap: _confirmLogout,
                             ),
-                            _buildDivider(),
-                            _buildMenuItem(
+                            const Divider(height: 1),
+                            MenuTile(
                               icon: Icons.delete_outline,
                               title: 'Hesabımı Sil',
                               subtitle: 'Hesabınızı ve verilerinizi kalıcı olarak silin',
-                              iconColor: Colors.red.shade600,
-                              titleColor: Colors.red.shade600,
-                              showArrow: false,
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Hesabı Sil', style: TextStyle(color: Colors.red)),
-                                    content: const Text('Hesabınızı silmek kalıcı bir işlemdir. Profil bilgileriniz silinecek ve aktif olan tüm randevularınız otomatik olarak iptal edilecektir. Bu işlemi onaylıyor musunuz?'),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Vazgeç')),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          _deleteAccount();
-                                        },
-                                        child: const Text('Evet, Hesabımı Sil', style: TextStyle(color: Colors.white)),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                              iconColor: context.scheme.error,
+                              trailing: const SizedBox.shrink(),
+                              onTap: _confirmDelete,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: AppSpacing.xxl),
                     ],
                   ),
                 ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: Colors.grey.shade400, size: 20),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-              const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    Color? iconColor,
-    Color? titleColor,
-    bool showArrow = true,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: (iconColor ?? AppTheme.primaryColor).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor ?? AppTheme.primaryColor, size: 22),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: titleColor ?? AppTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (showArrow)
-              Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Divider(
-      height: 1,
-      indent: 76,
-      endIndent: 16,
-      color: Colors.grey.shade100,
     );
   }
 }

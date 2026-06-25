@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/error_state.dart';
+import '../../../../shared/widgets/info_row.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
 import '../../data/models/clinic_model.dart';
+
+const String _imgBase = 'http://10.0.2.2:5295';
 
 class ClinicDetailScreen extends StatefulWidget {
   final int clinicId;
@@ -25,10 +33,13 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
   }
 
   Future<void> _fetchClinicDetails() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final dio = DioClient().dio;
       final response = await dio.get('/clinics/${widget.clinicId}');
-      
       if (response.data['success']) {
         setState(() {
           _clinic = ClinicModel.fromJson(response.data['data']);
@@ -51,15 +62,18 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)));
+      return const Scaffold(body: LoadingIndicator());
     }
 
     if (_error != null || _clinic == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: Center(child: Text(_error ?? 'Bulunamadı', style: const TextStyle(color: Colors.red))),
+        body: ErrorState(message: _error ?? 'Bulunamadı', onRetry: _fetchClinicDetails),
       );
     }
+
+    final clinic = _clinic!;
+    final primary = context.scheme.primary;
 
     return Scaffold(
       body: CustomScrollView(
@@ -67,86 +81,109 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
           SliverAppBar(
             expandedHeight: 200,
             pinned: true,
+            backgroundColor: primary,
+            foregroundColor: context.scheme.onPrimary,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(_clinic!.name, style: const TextStyle(color: Colors.white, shadows: [Shadow(color: Colors.black45, blurRadius: 4)])),
+              title: Text(
+                clinic.name,
+                style: TextStyle(color: context.scheme.onPrimary),
+              ),
               background: Container(
-                color: AppTheme.primaryColor,
-                child: const Center(child: Icon(Icons.local_hospital, size: 80, color: Colors.white24)),
+                color: primary,
+                child: Icon(Icons.local_hospital,
+                    size: 80, color: context.scheme.onPrimary.withOpacity(0.25)),
               ),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(AppSpacing.xl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInfoRow(Icons.location_on, _clinic!.address ?? 'Adres belirtilmemiş'),
-                  const SizedBox(height: 12),
-                  _buildInfoRow(Icons.phone, _clinic!.phone ?? 'Telefon belirtilmemiş'),
-                  const SizedBox(height: 24),
+                  AppCard(
+                    child: Column(
+                      children: [
+                        InfoRow(
+                          icon: Icons.location_on_outlined,
+                          label: 'Adres',
+                          value: clinic.address ?? 'Adres belirtilmemiş',
+                        ),
+                        InfoRow(
+                          icon: Icons.phone_outlined,
+                          label: 'Telefon',
+                          value: clinic.phone ?? 'Telefon belirtilmemiş',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
                   Text('Hakkında', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 8),
-                  Text(_clinic!.description ?? 'Açıklama yok.', style: Theme.of(context).textTheme.bodyMedium),
-                  const SizedBox(height: 32),
-                  Text('Veteriner Hekimlerimiz', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(clinic.description ?? 'Açıklama yok.',
+                      style: Theme.of(context).textTheme.bodyLarge),
+                  const SizedBox(height: AppSpacing.xl),
+                  Text('Veteriner Hekimlerimiz',
+                      style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: AppSpacing.md),
                 ],
               ),
             ),
           ),
-          if (_clinic!.vets != null)
+          if (clinic.vets != null)
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final vet = _clinic!.vets![index];
+                  final vet = clinic.vets![index];
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-                    child: Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: AppTheme.backgroundColor,
-                          backgroundImage: vet.profilePhoto != null
-                              ? NetworkImage('http://10.0.2.2:5295${vet.profilePhoto}')
-                              : null,
-                          child: vet.profilePhoto == null
-                              ? const Icon(Icons.person, color: AppTheme.primaryColor)
-                              : null,
-                        ),
-                        title: Text(vet.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(vet.title ?? vet.specialty ?? 'Veteriner Hekim'),
-                        trailing: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            textStyle: const TextStyle(fontSize: 14),
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xl, 0, AppSpacing.xl, AppSpacing.md),
+                    child: AppCard(
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: primary.withOpacity(0.12),
+                            backgroundImage: vet.profilePhoto != null
+                                ? NetworkImage('$_imgBase${vet.profilePhoto}')
+                                : null,
+                            child: vet.profilePhoto == null
+                                ? Icon(Icons.person, color: primary)
+                                : null,
                           ),
-                          onPressed: () {
-                            // Randevu ekranına yönlendirme
-                            context.push('/appointments/create?vetId=${vet.id}&clinicId=${_clinic!.id}');
-                          },
-                          child: const Text('Randevu Al'),
-                        ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(vet.fullName,
+                                    style: Theme.of(context).textTheme.titleMedium),
+                                Text(vet.title ?? vet.specialty ?? 'Veteriner Hekim',
+                                    style: Theme.of(context).textTheme.bodyMedium),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                            ),
+                            onPressed: () => context.push(
+                                '/appointments/create?vetId=${vet.id}&clinicId=${clinic.id}'),
+                            child: const Text('Randevu Al'),
+                          ),
+                        ],
                       ),
                     ),
                   );
                 },
-                childCount: _clinic!.vets!.length,
+                childCount: clinic.vets!.length,
               ),
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppTheme.primaryColor, size: 20),
-        const SizedBox(width: 12),
-        Expanded(child: Text(text, style: const TextStyle(fontSize: 16))),
-      ],
     );
   }
 }

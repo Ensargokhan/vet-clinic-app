@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/services/image_upload_service.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
+
+const String _imgBase = 'http://10.0.2.2:5295';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -57,7 +62,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Profil yüklenemedi: ${e.message}'),
-            backgroundColor: Colors.red,
+            backgroundColor: context.scheme.error,
           ),
         );
         setState(() => _isLoading = false);
@@ -74,16 +79,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final dio = DioClient().dio;
       await dio.put('/auth/profile', data: {
         'fullName': _nameController.text.trim(),
-        'phone': _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
+        'phone': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil başarıyla güncellendi!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Profil başarıyla güncellendi!'),
+            backgroundColor: context.colors.success,
           ),
         );
         context.pop();
@@ -93,7 +96,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Güncelleme hatası: ${e.response?.data?['message'] ?? e.message}'),
-            backgroundColor: Colors.red,
+            backgroundColor: context.scheme.error,
           ),
         );
       }
@@ -115,13 +118,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _profilePhotoUrl = newPhotoUrl;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil fotoğrafı başarıyla güncellendi!'), backgroundColor: Colors.green),
+          SnackBar(
+            content: const Text('Profil fotoğrafı başarıyla güncellendi!'),
+            backgroundColor: context.colors.success,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fotoğraf yüklenemedi.'), backgroundColor: Colors.red),
+          SnackBar(content: const Text('Fotoğraf yüklenemedi.'), backgroundColor: context.scheme.error),
         );
       }
     } finally {
@@ -131,31 +137,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = context.scheme.primary;
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          'Profili Düzenle',
-          style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600),
-        ),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Profili Düzenle'), centerTitle: true),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          ? const LoadingIndicator()
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(AppSpacing.xl),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Avatar
                     Center(
                       child: Stack(
                         children: [
@@ -163,31 +156,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             width: 100,
                             height: 100,
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withOpacity(0.1),
+                              color: primary.withOpacity(0.12),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
                               child: _profilePhotoUrl != null
                                   ? ClipOval(
                                       child: Image.network(
-                                        'http://10.0.2.2:5295${_profilePhotoUrl}',
+                                        '$_imgBase$_profilePhotoUrl',
                                         width: 100,
                                         height: 100,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Text(
-                                          _getInitials(_nameController.text),
-                                          style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
-                                        ),
+                                        errorBuilder: (context, error, stackTrace) =>
+                                            _initials(primary),
                                       ),
                                     )
-                                  : Text(
-                                      _getInitials(_nameController.text),
-                                      style: TextStyle(
-                                        fontSize: 36,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primaryColor,
-                                      ),
-                                    ),
+                                  : _initials(primary),
                             ),
                           ),
                           Positioned(
@@ -199,89 +183,71 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 width: 32,
                                 height: 32,
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor,
+                                  color: primary,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border: Border.all(color: context.scheme.surface, width: 2),
                                 ),
                                 child: _isUploadingPhoto
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(AppSpacing.sm),
+                                        child: CircularProgressIndicator(
+                                            color: context.scheme.onPrimary, strokeWidth: 2),
                                       )
-                                    : const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                                    : Icon(Icons.camera_alt,
+                                        color: context.scheme.onPrimary, size: 16),
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppSpacing.xl),
 
-                    // Ad Soyad
-                    _buildSectionLabel('Ad Soyad'),
-                    const SizedBox(height: 8),
+                    _sectionLabel('Ad Soyad'),
+                    const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _nameController,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.person_outline),
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.person_outline),
                         hintText: 'Adınız ve soyadınız',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade200),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.primaryColor),
-                        ),
                       ),
                       validator: (v) => Validators.required(v, alan: 'Ad soyad'),
                       onChanged: (_) => setState(() {}),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
 
-                    // E-posta (readonly)
-                    _buildSectionLabel('E-posta'),
-                    const SizedBox(height: 8),
+                    _sectionLabel('E-posta'),
+                    const SizedBox(height: AppSpacing.sm),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg, vertical: AppSpacing.lg),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade200),
+                        color: context.colors.surfaceAlt,
+                        borderRadius: AppRadius.mdAll,
+                        border: Border.all(color: context.colors.outline),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.email_outlined, color: Colors.grey.shade500, size: 22),
-                          const SizedBox(width: 12),
+                          Icon(Icons.email_outlined,
+                              color: context.colors.textSecondary, size: 22),
+                          const SizedBox(width: AppSpacing.md),
                           Expanded(
-                            child: Text(
-                              _email,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
+                            child: Text(_email,
+                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: context.colors.textSecondary)),
                           ),
-                          Icon(Icons.lock_outline, color: Colors.grey.shade400, size: 18),
+                          Icon(Icons.lock_outline,
+                              color: context.colors.textSecondary, size: 18),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'E-posta adresi güvenlik nedeniyle değiştirilemez',
-                      style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
-                    ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text('E-posta adresi güvenlik nedeniyle değiştirilemez',
+                        style: Theme.of(context).textTheme.labelSmall),
+                    const SizedBox(height: AppSpacing.xl),
 
-                    // Telefon
-                    _buildSectionLabel('Telefon Numarası'),
-                    const SizedBox(height: 8),
+                    _sectionLabel('Telefon Numarası'),
+                    const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
@@ -290,51 +256,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         LengthLimitingTextInputFormatter(11),
                       ],
                       validator: Validators.phoneOptional,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.phone_outlined),
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.phone_outlined),
                         hintText: '05XX XXX XX XX',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey.shade200),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppTheme.primaryColor),
-                        ),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: AppSpacing.xxl),
 
-                    // Kaydet Butonu
                     ElevatedButton(
                       onPressed: _isSaving ? null : _handleSave,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
                       child: _isSaving
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                  color: context.scheme.onPrimary, strokeWidth: 2),
                             )
-                          : const Text(
-                              'Değişiklikleri Kaydet',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                            ),
+                          : const Text('Değişiklikleri Kaydet'),
                     ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -342,16 +281,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildSectionLabel(String text) {
+  Widget _initials(Color color) {
     return Text(
-      text,
-      style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: AppTheme.textSecondary,
-        letterSpacing: 0.3,
-      ),
+      _getInitials(_nameController.text),
+      style: Theme.of(context)
+          .textTheme
+          .displayLarge
+          ?.copyWith(color: color, fontSize: 34),
     );
+  }
+
+  Widget _sectionLabel(String text) {
+    return Text(text, style: Theme.of(context).textTheme.labelLarge);
   }
 
   String _getInitials(String fullName) {

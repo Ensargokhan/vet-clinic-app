@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/network/dio_client.dart';
 import 'package:dio/dio.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_state.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../../shared/widgets/section_header.dart';
+import '../../../../shared/widgets/stat_card.dart';
 
 class ClinicDashboardScreen extends StatefulWidget {
   const ClinicDashboardScreen({super.key});
@@ -30,7 +38,6 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     try {
       final dio = DioClient().dio;
       final response = await dio.get('/clinics/my-clinic/dashboard');
-
       if (response.data['success'] == true) {
         setState(() {
           _dashboardData = response.data['data'];
@@ -52,27 +59,9 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor));
-    }
-
+    if (_isLoading) return const LoadingIndicator();
     if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(_errorMessage!, style: TextStyle(color: Colors.grey.shade600)),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _loadDashboard,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Tekrar Dene'),
-            ),
-          ],
-        ),
-      );
+      return ErrorState(message: _errorMessage!, onRetry: _loadDashboard);
     }
 
     final data = _dashboardData!;
@@ -85,18 +74,68 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadDashboard,
-      color: AppTheme.primaryColor,
+      color: context.scheme.primary,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(adminName, clinicName),
-            const SizedBox(height: 24),
-            _buildStatsCards(todayCount, pendingCount, vetCount),
-            const SizedBox(height: 32),
-            _buildUpcomingAppointments(upcoming),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.xl),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: StatCard(
+                        icon: Icons.calendar_today_outlined,
+                        value: todayCount.toString(),
+                        label: 'Bugün'),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: StatCard(
+                        icon: Icons.pending_actions,
+                        value: pendingCount.toString(),
+                        label: 'Bekleyen',
+                        accent: context.colors.warning),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: StatCard(
+                        icon: Icons.group,
+                        value: vetCount.toString(),
+                        label: 'Hekimler',
+                        accent: context.colors.info),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionHeader('Yaklaşan Randevular'),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (upcoming.isEmpty)
+                    const EmptyState(
+                      icon: Icons.event_available_outlined,
+                      message: 'Yaklaşan randevu bulunmuyor.',
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: upcoming.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+                      itemBuilder: (context, index) => _upcomingItem(upcoming[index]),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
           ],
         ),
       ),
@@ -104,48 +143,43 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
   }
 
   Widget _buildHeader(String adminName, String clinicName) {
+    final primary = context.scheme.primary;
+    final onPrimary = context.scheme.onPrimary;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            AppTheme.primaryColor,
-            AppTheme.primaryColor.withOpacity(0.8),
-          ],
+          colors: [primary, primary.withOpacity(0.82)],
         ),
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(32),
-          bottomRight: Radius.circular(32),
+          bottomLeft: Radius.circular(AppRadius.xl + 12),
+          bottomRight: Radius.circular(AppRadius.xl + 12),
         ),
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl, AppSpacing.xl, AppSpacing.xl, AppSpacing.xxl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Merhaba, $adminName',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
+              Text('Merhaba, $adminName',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineMedium
+                      ?.copyWith(color: onPrimary)),
+              const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
-                  Icon(Icons.local_hospital, color: Colors.white.withOpacity(0.8), size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    clinicName,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                    ),
-                  ),
+                  Icon(Icons.local_hospital, color: onPrimary.withOpacity(0.85), size: 16),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(clinicName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyLarge
+                          ?.copyWith(color: onPrimary.withOpacity(0.9))),
                 ],
               ),
             ],
@@ -155,144 +189,42 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
     );
   }
 
-  Widget _buildStatsCards(int today, int pending, int vets) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+  Widget _upcomingItem(dynamic appt) {
+    final date = DateTime.tryParse(appt['appointmentDate'] ?? '')?.toLocal();
+    final timeStr = date != null
+        ? '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}'
+        : '';
+    final primary = context.scheme.primary;
+
+    return AppCard(
       child: Row(
         children: [
-          _buildStatCard(Icons.calendar_today, 'Bugün', today.toString(), AppTheme.primaryColor),
-          const SizedBox(width: 12),
-          _buildStatCard(Icons.pending_actions, 'Bekleyen', pending.toString(), Colors.orange.shade400),
-          const SizedBox(width: 12),
-          _buildStatCard(Icons.group, 'Hekimler', vets.toString(), AppTheme.secondaryColor),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(IconData icon, String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: primary.withOpacity(0.12),
+              borderRadius: AppRadius.mdAll,
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUpcomingAppointments(List<dynamic> upcoming) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Yaklaşan Randevular',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-              ),
-            ],
+            child: Text(timeStr,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(color: primary)),
           ),
-          const SizedBox(height: 16),
-          if (upcoming.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Text('Yaklaşan randevu bulunmuyor.', style: TextStyle(color: AppTheme.textSecondary)),
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: upcoming.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final appt = upcoming[index];
-                final dateStr = appt['appointmentDate'];
-                final date = DateTime.tryParse(dateStr ?? '')?.toLocal();
-                
-                String timeStr = '';
-                if (date != null) {
-                  timeStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-                }
-
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade100),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          timeStr,
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              appt['animalName'] ?? '',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Hekim: ${appt['vetName']}',
-                              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(appt['animalName'] ?? '',
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 2),
+                Text('Hekim: ${appt['vetName']}',
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ],
             ),
+          ),
         ],
       ),
     );

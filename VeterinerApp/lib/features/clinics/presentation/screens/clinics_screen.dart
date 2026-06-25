@@ -4,8 +4,15 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_radius.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/app_chip.dart';
+import '../../../../shared/widgets/empty_state.dart';
+import '../../../../shared/widgets/error_state.dart';
+import '../../../../shared/widgets/loading_indicator.dart';
 import '../../data/models/clinic_model.dart';
 
 class ClinicsScreen extends StatefulWidget {
@@ -328,10 +335,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                             Navigator.pop(context);
                             _fetchClinics(refresh: true);
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                          ),
                           child: const Text('Uygula'),
                         ),
                       ),
@@ -351,22 +354,20 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Anlaşmalı Klinikler', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: const Text('Anlaşmalı Klinikler'),
         actions: [
           IconButton(
             icon: Stack(
               children: [
-                const Icon(Icons.filter_list, color: AppTheme.primaryColor),
+                Icon(Icons.filter_list, color: context.scheme.primary),
                 if (_selectedCity != null || _selectedDistrict != null || _selectedSpecialty != null)
                   Positioned(
                     right: 0,
                     top: 0,
                     child: Container(
                       padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
+                      decoration: BoxDecoration(
+                        color: context.scheme.error,
                         shape: BoxShape.circle,
                       ),
                       constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
@@ -381,7 +382,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
             child: TextField(
               controller: _searchController,
               onChanged: _onSearchChanged,
@@ -398,9 +400,13 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       )
                     : null,
                 filled: true,
-                fillColor: Colors.grey.shade100,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                fillColor: context.colors.surfaceAlt,
+                border: const OutlineInputBorder(
+                  borderRadius: AppRadius.lgAll,
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: const OutlineInputBorder(
+                  borderRadius: AppRadius.lgAll,
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -414,151 +420,118 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor));
+      return const LoadingIndicator();
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-            TextButton(
-              onPressed: () => _fetchClinics(refresh: true), 
-              child: const Text('Tekrar Dene'),
-            ),
-          ],
-        ),
-      );
+      return ErrorState(message: _error!, onRetry: () => _fetchClinics(refresh: true));
     }
 
     if (_clinics.isEmpty) {
-      return const Center(
-        child: Text(
-          'Aradığınız kritere uygun klinik bulunamadı.',
-          style: TextStyle(color: Colors.grey, fontSize: 16),
-        ),
+      return const EmptyState(
+        icon: Icons.search_off,
+        message: 'Aradığınız kritere uygun klinik bulunamadı.',
       );
     }
 
     return RefreshIndicator(
       onRefresh: () => _fetchClinics(refresh: true),
-      color: AppTheme.primaryColor,
+      color: context.scheme.primary,
       child: ListView.separated(
         controller: _scrollController,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         itemCount: _clinics.length + (_hasNext ? 1 : 0),
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.md),
         itemBuilder: (context, index) {
           if (index == _clinics.length) {
             return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16.0),
-              child: Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
+              padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+              child: LoadingIndicator(),
             );
           }
+          return _clinicCard(_clinics[index]);
+        },
+      ),
+    );
+  }
 
-          final clinic = _clinics[index];
-          return Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () => context.push('/clinics/${clinic.id}'),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+  Widget _clinicCard(ClinicModel clinic) {
+    final primary = context.scheme.primary;
+    return AppCard(
+      onTap: () => context.push('/clinics/${clinic.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: primary.withOpacity(0.1),
+              borderRadius: AppRadius.mdAll,
+            ),
+            child: clinic.logoUrl != null && clinic.logoUrl!.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: AppRadius.mdAll,
+                    child: Image.network(
+                      clinic.logoUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(Icons.local_hospital, color: primary, size: 32),
+                    ),
+                  )
+                : Icon(Icons.local_hospital, color: primary, size: 32),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(clinic.name, style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: AppSpacing.xs),
+                Row(
                   children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: clinic.logoUrl != null && clinic.logoUrl!.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(clinic.logoUrl!, fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.local_hospital, color: AppTheme.primaryColor, size: 32),
-                              ),
-                            )
-                          : const Icon(Icons.local_hospital, color: AppTheme.primaryColor, size: 32),
-                    ),
-                    const SizedBox(width: 16),
+                    Icon(Icons.location_on_outlined,
+                        size: 14, color: context.colors.textSecondary),
+                    const SizedBox(width: AppSpacing.xs),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            clinic.name,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on, size: 14, color: AppTheme.textSecondary),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  '${clinic.district ?? ""}${clinic.district != null && clinic.city != null ? ", " : ""}${clinic.city ?? ""}',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (clinic.rating != null) ...[
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(Icons.star, size: 14, color: Colors.amber),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${clinic.rating!.toStringAsFixed(1)} (${clinic.reviewCount})',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          if (clinic.specialties.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: clinic.specialties.take(3).map((s) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    s,
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppTheme.primaryColor,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ],
+                      child: Text(
+                        '${clinic.district ?? ""}${clinic.district != null && clinic.city != null ? ", " : ""}${clinic.city ?? ""}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.textSecondary),
                   ],
                 ),
-              ),
+                if (clinic.rating != null) ...[
+                  const SizedBox(height: AppSpacing.xs),
+                  Row(
+                    children: [
+                      Icon(Icons.star, size: 14, color: context.colors.warning),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        '${clinic.rating!.toStringAsFixed(1)} (${clinic.reviewCount})',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ],
+                if (clinic.specialties.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.xs + 2,
+                    runSpacing: AppSpacing.xs + 2,
+                    children:
+                        clinic.specialties.take(3).map((s) => AppChip(s)).toList(),
+                  ),
+                ],
+              ],
             ),
-          );
-        },
+          ),
+          Icon(Icons.arrow_forward_ios, size: 16, color: context.colors.textSecondary),
+        ],
       ),
     );
   }

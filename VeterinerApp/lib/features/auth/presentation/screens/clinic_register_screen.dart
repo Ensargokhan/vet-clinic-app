@@ -4,8 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 
 class ClinicRegisterScreen extends StatefulWidget {
@@ -183,12 +183,9 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: Icon(Icons.arrow_back_ios, color: context.scheme.onSurface),
           onPressed: () => context.pop(),
         ),
       ),
@@ -209,24 +206,14 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                         onPressed: _isLoading
                             ? null
                             : (_currentStep == 1 ? _handleRegister : details.onStepContinue),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
                         child: _isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                    color: context.scheme.onPrimary, strokeWidth: 2),
                               )
-                            : Text(
-                                _currentStep == 1 ? 'Kliniği Kaydet' : 'Devam Et',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
+                            : Text(_currentStep == 1 ? 'Kliniği Kaydet' : 'Devam Et'),
                       ),
                     ),
                     if (_currentStep > 0) ...[
@@ -234,15 +221,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: _isLoading ? null : details.onStepCancel,
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            foregroundColor: AppTheme.primaryColor,
-                            side: const BorderSide(color: AppTheme.primaryColor),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text('Geri', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: const Text('Geri'),
                         ),
                       ),
                     ],
@@ -279,14 +258,17 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Kurumsal Kayıt 🏢',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
+                          ?.copyWith(color: context.scheme.primary),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Önce kliniği yönetecek yetkilinin bilgilerini girelim.',
-                      style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 24),
                     _buildTextField(
@@ -322,7 +304,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       icon: Icons.lock_outline,
                       obscureText: _obscurePassword,
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: context.colors.textSecondary),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                       validator: Validators.password,
@@ -336,9 +318,9 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Klinik Bilgileri',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -364,24 +346,9 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'İl',
-                              prefixIcon: const Icon(Icons.location_city_outlined, color: Colors.grey),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: Colors.grey.shade200),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: AppTheme.primaryColor),
-                              ),
+                              prefixIcon: Icon(Icons.location_city_outlined),
                             ),
                             isExpanded: true,
                             value: _selectedCity,
@@ -398,24 +365,9 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               labelText: 'İlçe',
-                              prefixIcon: const Icon(Icons.map_outlined, color: Colors.grey),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(color: Colors.grey.shade200),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(color: AppTheme.primaryColor),
-                              ),
+                              prefixIcon: Icon(Icons.map_outlined),
                             ),
                             isExpanded: true,
                             value: _selectedDistrict,
@@ -440,26 +392,12 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       controller: _clinicAddressController,
                       maxLines: 3,
                       validator: (v) => Validators.required(v, alan: 'Adres'),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Açık Adres',
                         alignLabelWithHint: true,
-                        prefixIcon: const Padding(
+                        prefixIcon: Padding(
                           padding: EdgeInsets.only(bottom: 40.0),
-                          child: Icon(Icons.location_on_outlined, color: Colors.grey),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.grey.shade200),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: AppTheme.primaryColor),
+                          child: Icon(Icons.location_on_outlined),
                         ),
                       ),
                     ),
@@ -491,22 +429,8 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
       inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: Colors.grey),
+        prefixIcon: Icon(icon),
         suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade200),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppTheme.primaryColor),
-        ),
       ),
     );
   }

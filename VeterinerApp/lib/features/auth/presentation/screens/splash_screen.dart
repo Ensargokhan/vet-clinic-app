@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/dio_client.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -82,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: context.scheme.primary,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -103,10 +103,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     )
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.pets,
                   size: 80,
-                  color: AppTheme.primaryColor,
+                  color: context.scheme.primary,
                 ),
               ),
               const SizedBox(height: 24),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/services/image_upload_service.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import 'package:dio/dio.dart';
 
@@ -95,14 +95,14 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil başarıyla güncellendi.'), backgroundColor: Colors.green),
+          SnackBar(content: const Text('Profil başarıyla güncellendi.'), backgroundColor: context.colors.success),
         );
         context.pop(true); // Return true to indicate success
       }
     } on DioException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.response?.data?['message'] ?? 'Hata oluştu'), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.response?.data?['message'] ?? 'Hata oluştu'), backgroundColor: context.scheme.error),
         );
       }
     } finally {
@@ -125,13 +125,13 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
           _profilePhotoUrl = newPhotoUrl;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil fotoğrafı başarıyla güncellendi!'), backgroundColor: Colors.green),
+          SnackBar(content: const Text('Profil fotoğrafı başarıyla güncellendi!'), backgroundColor: context.colors.success),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fotoğraf yüklenemedi.'), backgroundColor: Colors.red),
+          SnackBar(content: const Text('Fotoğraf yüklenemedi.'), backgroundColor: context.scheme.error),
         );
       }
     } finally {
@@ -142,12 +142,7 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text('Profili Düzenle', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Profili Düzenle')),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -161,7 +156,7 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: context.scheme.primary.withOpacity(0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -172,10 +167,10 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                                 width: 100,
                                 height: 100,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, size: 50, color: AppTheme.primaryColor),
+                                errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 48, color: context.scheme.primary),
                               ),
                             )
-                          : const Icon(Icons.person, size: 50, color: AppTheme.primaryColor),
+                          : Icon(Icons.person, size: 48, color: context.scheme.primary),
                     ),
                   ),
                   Positioned(
@@ -187,16 +182,16 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
+                          color: context.scheme.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                          border: Border.all(color: context.scheme.surface, width: 2),
                         ),
                         child: _isUploadingPhoto
-                            ? const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            ? Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(color: context.scheme.onPrimary, strokeWidth: 2),
                               )
-                            : const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                            : Icon(Icons.camera_alt, color: context.scheme.onPrimary, size: 16),
                       ),
                     ),
                   ),
@@ -276,7 +271,7 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: _isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: context.scheme.onPrimary))
                         : const Text('Değişiklikleri Kaydet'),
                   ),
                 ),

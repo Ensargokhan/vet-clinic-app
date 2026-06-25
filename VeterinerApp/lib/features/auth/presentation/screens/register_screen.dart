@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -100,7 +100,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: Icon(Icons.arrow_back_ios, color: context.scheme.onSurface),
           onPressed: () => context.pop(),
         ),
       ),
@@ -164,7 +164,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleRegister,
                     child: _isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        ? SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: context.scheme.onPrimary, strokeWidth: 2))
                         : const Text('Kayıt Ol'),
                   ),
                   const SizedBox(height: 24),

@@ -16,6 +16,9 @@ dependencies:
   
   # Networking
   dio: ^5.4.0
+
+  # Yerel ayar saklama (tema modu vb.)
+  shared_preferences: ^2.2.2
   
   # Firebase
   firebase_core: ^4.10.0
