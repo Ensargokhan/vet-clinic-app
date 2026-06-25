@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -63,7 +65,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on FirebaseAuthException catch (e) {
       String message = 'Bir hata oluştu: ${e.message}';
       if (e.code == 'email-already-in-use') message = 'Bu e-posta zaten kullanımda';
-      
+      if (e.code == 'weak-password') message = 'Şifre çok zayıf, en az 6 karakter girin.';
+      if (e.code == 'invalid-email') message = 'Geçersiz e-posta adresi.';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
@@ -122,20 +126,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Ad Soyad', prefixIcon: Icon(Icons.person_outline)),
-                    validator: (v) => v!.isEmpty ? 'Ad soyad zorunludur' : null,
+                    validator: (v) => Validators.required(v, alan: 'Ad soyad'),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(labelText: 'E-posta Adresi', prefixIcon: Icon(Icons.email_outlined)),
-                    validator: (v) => v!.isEmpty || !v.contains('@') ? 'Geçerli bir e-posta girin' : null,
+                    validator: Validators.email,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                    ],
                     decoration: const InputDecoration(labelText: 'Telefon Numarası', prefixIcon: Icon(Icons.phone_outlined)),
+                    validator: Validators.phone,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -149,7 +158,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
-                    validator: (v) => v!.isEmpty || v.length < 6 ? 'Şifre en az 6 karakter olmalı' : null,
+                    validator: Validators.password,
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/validators.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -113,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: 'E-posta Adresi',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
-                    validator: (v) => v!.isEmpty || !v.contains('@') ? 'Geçerli bir e-posta girin' : null,
+                    validator: Validators.email,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -127,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
-                    validator: (v) => v!.isEmpty || v.length < 6 ? 'Şifre en az 6 karakter olmalı' : null,
+                    validator: Validators.password,
                   ),
                   const SizedBox(height: 12),
                   Align(

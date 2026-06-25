@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/services/image_upload_service.dart';
+import '../../../../core/utils/validators.dart';
 import 'package:dio/dio.dart';
 
 class ClinicProfileEditScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class ClinicProfileEditScreen extends StatefulWidget {
 }
 
 class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
+  final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isUploadingPhoto = false;
   String? _logoUrl;
@@ -56,12 +58,7 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Klinik adı boş bırakılamaz'), backgroundColor: Colors.red),
-      );
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
     try {
@@ -131,7 +128,9 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -192,21 +191,28 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
+                    TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(labelText: 'Klinik Adı', prefixIcon: Icon(Icons.local_hospital)),
+                      validator: (v) => Validators.required(v, alan: 'Klinik adı'),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    TextFormField(
                       controller: _emailController,
                       decoration: const InputDecoration(labelText: 'E-posta', prefixIcon: Icon(Icons.email)),
                       keyboardType: TextInputType.emailAddress,
+                      validator: Validators.emailOptional,
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    TextFormField(
                       controller: _phoneController,
                       decoration: const InputDecoration(labelText: 'Telefon', prefixIcon: Icon(Icons.phone)),
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      validator: Validators.phoneOptional,
                     ),
                   ],
                 ),
@@ -289,6 +295,7 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
             ),
             const SizedBox(height: 40),
           ],
+        ),
         ),
       ),
     );

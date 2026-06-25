@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/validators.dart';
 import 'package:dio/dio.dart';
 
 class ClinicVetsScreen extends StatefulWidget {
@@ -108,27 +110,32 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                 TextFormField(
                   controller: nameCtrl,
                   decoration: const InputDecoration(labelText: 'Ad Soyad', prefixIcon: Icon(Icons.person)),
-                  validator: (v) => v!.isEmpty ? 'Boş bırakılamaz' : null,
+                  validator: (v) => Validators.required(v, alan: 'Ad soyad'),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(labelText: 'E-posta', prefixIcon: Icon(Icons.email)),
-                  validator: (v) => v!.contains('@') ? null : 'Geçerli bir e-posta girin',
+                  validator: Validators.email,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: passwordCtrl,
                   obscureText: true,
                   decoration: const InputDecoration(labelText: 'Geçici Şifre', prefixIcon: Icon(Icons.lock)),
-                  validator: (v) => v!.length < 6 ? 'En az 6 karakter' : null,
+                  validator: Validators.password,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: phoneCtrl,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(11),
+                  ],
                   decoration: const InputDecoration(labelText: 'Telefon', prefixIcon: Icon(Icons.phone)),
+                  validator: Validators.phone,
                 ),
                 const SizedBox(height: 12),
                 Row(

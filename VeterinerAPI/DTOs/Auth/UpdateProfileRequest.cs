@@ -8,6 +8,7 @@ public class UpdateProfileRequest
     [MaxLength(100, ErrorMessage = "Ad Soyad en fazla 100 karakter olabilir.")]
     public string FullName { get; set; } = string.Empty;
 
+    [RegularExpression(@"^0?\d{10}$", ErrorMessage = "Geçerli bir telefon numarası giriniz (10-11 hane).")]
     [MaxLength(20, ErrorMessage = "Telefon numarası en fazla 20 karakter olabilir.")]
     public string? Phone { get; set; }
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/services/image_upload_service.dart';
+import '../../../../core/utils/validators.dart';
 import 'package:dio/dio.dart';
 
 class VetProfileEditScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class VetProfileEditScreen extends StatefulWidget {
 }
 
 class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
+  final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isUploadingPhoto = false;
   String? _profilePhotoUrl;
@@ -68,6 +70,8 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
   }
 
   Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
     try {
       final dio = DioClient().dio;
@@ -133,7 +137,9 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -214,10 +220,15 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    TextFormField(
                       controller: _phoneController,
                       decoration: const InputDecoration(labelText: 'Telefon', prefixIcon: Icon(Icons.phone)),
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      validator: Validators.phoneOptional,
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -259,6 +270,7 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );

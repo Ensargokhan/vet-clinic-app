@@ -14,6 +14,7 @@ public class RegisterClinicRequest
     [MaxLength(150)]
     public string AdminEmail { get; set; } = string.Empty;
 
+    [RegularExpression(@"^0?\d{10}$", ErrorMessage = "Geçerli bir telefon numarası giriniz (10-11 hane).")]
     [MaxLength(20)]
     public string? AdminPhone { get; set; }
 
@@ -28,8 +29,11 @@ public class RegisterClinicRequest
     [MaxLength(100)]
     public string? ClinicDistrict { get; set; }
 
-    public string? ClinicAddress { get; set; }
+    [Required(ErrorMessage = "Klinik adresi zorunludur.")]
+    [MaxLength(300, ErrorMessage = "Adres bilgisi en fazla 300 karakter olabilir.")]
+    public string ClinicAddress { get; set; } = string.Empty;
 
+    [RegularExpression(@"^0?\d{10}$", ErrorMessage = "Geçerli bir telefon numarası giriniz (10-11 hane).")]
     [MaxLength(20)]
     public string? ClinicPhone { get; set; }
 

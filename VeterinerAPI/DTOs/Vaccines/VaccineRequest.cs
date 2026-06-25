@@ -8,7 +8,7 @@ public class VaccineRequest
     public int AnimalId { get; set; }
 
     [Required(ErrorMessage = "Aşı adı zorunludur.")]
-    [MaxLength(200, ErrorMessage = "Aşı adı en fazla 200 karakter olabilir.")]
+    [MaxLength(150, ErrorMessage = "Aşı adı en fazla 150 karakter olabilir.")]
     public string VaccineName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Aşılanma tarihi zorunludur.")]

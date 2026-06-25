@@ -54,6 +54,7 @@ public class VaccinesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateVaccine(int id, [FromBody] VaccineRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(new ApiResponse<object> { Success = false, Message = "Geçersiz veriler." });
         string role = HttpContext.Items["UserRole"]?.ToString() ?? "owner";
 
         var success = await _vaccineService.UpdateVaccineAsync(id, request, role);

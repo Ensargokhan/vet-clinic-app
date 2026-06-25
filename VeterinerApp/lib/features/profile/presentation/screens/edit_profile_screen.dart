@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/services/image_upload_service.dart';
+import '../../../../core/utils/validators.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -238,7 +240,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           borderSide: const BorderSide(color: AppTheme.primaryColor),
                         ),
                       ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Ad soyad zorunludur' : null,
+                      validator: (v) => Validators.required(v, alan: 'Ad soyad'),
                       onChanged: (_) => setState(() {}),
                     ),
                     const SizedBox(height: 24),
@@ -283,6 +285,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      validator: Validators.phoneOptional,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.phone_outlined),
                         hintText: '05XX XXX XX XX',

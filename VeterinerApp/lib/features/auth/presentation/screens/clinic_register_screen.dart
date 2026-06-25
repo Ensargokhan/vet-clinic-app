@@ -3,9 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/validators.dart';
 
 class ClinicRegisterScreen extends StatefulWidget {
   const ClinicRegisterScreen({super.key});
@@ -150,7 +151,9 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
     } on FirebaseAuthException catch (e) {
       String message = 'Bir hata oluştu: ${e.message}';
       if (e.code == 'email-already-in-use') message = 'Bu e-posta zaten kullanımda';
-      
+      if (e.code == 'weak-password') message = 'Şifre çok zayıf, en az 6 karakter girin.';
+      if (e.code == 'invalid-email') message = 'Geçersiz e-posta adresi.';
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -249,12 +252,14 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
             },
             onStepContinue: () {
               if (_currentStep == 0) {
-                // Sadece 1. adımın alanlarını doğrula
-                if (_adminNameController.text.isEmpty || 
-                    _adminEmailController.text.isEmpty || 
-                    _passwordController.text.length < 6) {
+                // Sadece 1. adımın alanlarını doğrula (Form.validate() tüm adımları doğrular)
+                final hata = Validators.required(_adminNameController.text, alan: 'Ad soyad') ??
+                    Validators.email(_adminEmailController.text) ??
+                    Validators.phone(_adminPhoneController.text) ??
+                    Validators.password(_passwordController.text);
+                if (hata != null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Lütfen gerekli alanları doldurun'), backgroundColor: Colors.orange),
+                    SnackBar(content: Text(hata), backgroundColor: Colors.orange),
                   );
                   return;
                 }
@@ -288,7 +293,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       controller: _adminNameController,
                       label: 'Yönetici Ad Soyad',
                       icon: Icons.person_outline,
-                      validator: (v) => v?.isEmpty == true ? 'Zorunlu alan' : null,
+                      validator: (v) => Validators.required(v, alan: 'Ad soyad'),
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -296,7 +301,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       label: 'Kurumsal E-posta',
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
-                      validator: (v) => v?.contains('@') == true ? null : 'Geçerli bir e-posta girin',
+                      validator: Validators.email,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -304,6 +309,11 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       label: 'Yönetici Telefonu',
                       icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      validator: Validators.phone,
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -315,7 +325,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                         icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
-                      validator: (v) => v != null && v.length >= 6 ? null : 'En az 6 karakter',
+                      validator: Validators.password,
                     ),
                   ],
                 ),
@@ -335,7 +345,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       controller: _clinicNameController,
                       label: 'Klinik Adı',
                       icon: Icons.local_hospital_outlined,
-                      validator: (v) => v?.isEmpty == true ? 'Zorunlu alan' : null,
+                      validator: (v) => Validators.required(v, alan: 'Klinik adı'),
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
@@ -343,6 +353,11 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                       label: 'Klinik İletişim Numarası',
                       icon: Icons.support_agent_outlined,
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      validator: Validators.phone,
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -424,6 +439,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                     TextFormField(
                       controller: _clinicAddressController,
                       maxLines: 3,
+                      validator: (v) => Validators.required(v, alan: 'Adres'),
                       decoration: InputDecoration(
                         labelText: 'Açık Adres',
                         alignLabelWithHint: true,
@@ -465,12 +481,14 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
     TextInputType? keyboardType,
     Widget? suffixIcon,
     String? Function(String?)? validator,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.grey),

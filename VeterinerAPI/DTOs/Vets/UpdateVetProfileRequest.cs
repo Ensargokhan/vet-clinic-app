@@ -13,6 +13,7 @@ public class UpdateVetProfileRequest
     [MaxLength(1000, ErrorMessage = "Biyografi en fazla 1000 karakter olabilir.")]
     public string? Bio { get; set; }
 
+    [RegularExpression(@"^0?\d{10}$", ErrorMessage = "Geçerli bir telefon numarası giriniz (10-11 hane).")]
     [MaxLength(20, ErrorMessage = "Telefon numarası en fazla 20 karakter olabilir.")]
     public string? Phone { get; set; }
 }

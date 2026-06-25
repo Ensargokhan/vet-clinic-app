@@ -25,7 +25,7 @@ public class AnimalRequest
     [MaxLength(50, ErrorMessage = "Mikroçip numarası en fazla 50 karakter olabilir.")]
     public string? MicrochipNo { get; set; }
 
-    [MaxLength(500, ErrorMessage = "Fotoğraf URL'si en fazla 500 karakter olabilir.")]
+    [MaxLength(255, ErrorMessage = "Fotoğraf URL'si en fazla 255 karakter olabilir.")]
     public string? PhotoUrl { get; set; }
 
     [MaxLength(1000, ErrorMessage = "Notlar en fazla 1000 karakter olabilir.")]

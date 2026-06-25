@@ -70,6 +70,7 @@ public class ClinicsController : ControllerBase
     [HttpPut("my-clinic")]
     public async Task<IActionResult> UpdateMyClinic([FromBody] VeterinerAPI.DTOs.Clinics.UpdateClinicRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(new ApiResponse<object> { Success = false, Message = "Geçersiz veriler." });
         var firebaseUid = User.FindFirstValue("FirebaseUid");
         if (string.IsNullOrEmpty(firebaseUid)) return Unauthorized();
 
@@ -80,6 +81,7 @@ public class ClinicsController : ControllerBase
     [HttpPost("my-clinic/vets")]
     public async Task<IActionResult> AddVetToClinic([FromBody] VeterinerAPI.DTOs.Vets.AddVetToClinicRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(new ApiResponse<object> { Success = false, Message = "Geçersiz veriler." });
         var firebaseUid = User.FindFirstValue("FirebaseUid");
         if (string.IsNullOrEmpty(firebaseUid)) return Unauthorized();
 

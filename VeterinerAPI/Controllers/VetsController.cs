@@ -93,6 +93,7 @@ public class VetsController : ControllerBase
     [HttpPut("my-schedule")]
     public async Task<IActionResult> UpdateMySchedule([FromBody] List<VeterinerAPI.DTOs.Vets.UpdateVetScheduleRequest> schedules)
     {
+        if (!ModelState.IsValid) return BadRequest(new ApiResponse<object> { Success = false, Message = "Geçersiz veriler." });
         var firebaseUid = User.FindFirstValue("FirebaseUid");
         if (string.IsNullOrEmpty(firebaseUid)) return Unauthorized();
 
@@ -113,6 +114,7 @@ public class VetsController : ControllerBase
     [HttpPut("my-profile")]
     public async Task<IActionResult> UpdateMyProfile([FromBody] VeterinerAPI.DTOs.Vets.UpdateVetProfileRequest request)
     {
+        if (!ModelState.IsValid) return BadRequest(new ApiResponse<object> { Success = false, Message = "Geçersiz veriler." });
         var firebaseUid = User.FindFirstValue("FirebaseUid");
         if (string.IsNullOrEmpty(firebaseUid)) return Unauthorized();
 

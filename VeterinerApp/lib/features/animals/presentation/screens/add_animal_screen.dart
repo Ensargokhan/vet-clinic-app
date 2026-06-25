@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/utils/validators.dart';
 
 class AddAnimalScreen extends StatefulWidget {
   const AddAnimalScreen({super.key});
@@ -86,14 +87,14 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
                 controller: _nameController,
                 label: 'Adı',
                 icon: Icons.pets,
-                validator: (v) => v!.isEmpty ? 'Gerekli' : null,
+                validator: (v) => Validators.required(v, alan: 'Ad'),
               ),
               const SizedBox(height: 16),
               _buildTextField(
                 controller: _speciesController,
                 label: 'Türü (Kedi, Köpek vb.)',
                 icon: Icons.category,
-                validator: (v) => v!.isEmpty ? 'Gerekli' : null,
+                validator: (v) => Validators.required(v, alan: 'Tür'),
               ),
               const SizedBox(height: 16),
               _buildTextField(

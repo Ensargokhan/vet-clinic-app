@@ -16,6 +16,7 @@ public class RegisterRequest
     [MaxLength(150, ErrorMessage = "E-posta adresi en fazla 150 karakter olabilir.")]
     public string Email { get; set; } = string.Empty;
 
+    [RegularExpression(@"^0?\d{10}$", ErrorMessage = "Geçerli bir telefon numarası giriniz (10-11 hane).")]
     [MaxLength(20, ErrorMessage = "Telefon numarası en fazla 20 karakter olabilir.")]
     public string? Phone { get; set; }
 

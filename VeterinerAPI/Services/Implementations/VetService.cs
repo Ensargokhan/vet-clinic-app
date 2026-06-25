@@ -181,6 +181,10 @@ public class VetService : IVetService
         
         foreach (var req in schedules)
         {
+            // Sadece o gün çalışılıyorsa saat aralığı mantıklı olmalı (bitiş > başlangıç)
+            if (req.IsActive && req.EndTime <= req.StartTime)
+                throw new Exception("Çalışma bitiş saati, başlangıç saatinden sonra olmalıdır.");
+
             var existing = existingSchedules.FirstOrDefault(s => s.DayOfWeek == req.DayOfWeek);
             if (existing != null)
             {

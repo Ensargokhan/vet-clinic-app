@@ -47,6 +47,9 @@ public class AuthController : ControllerBase
     [EnableRateLimiting("AuthPolicy")]
     public async Task<IActionResult> RegisterClinic([FromBody] RegisterClinicRequest request)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(new ApiResponse<object> { Success = false, Message = "Geçersiz veriler." });
+
         var firebaseUid = User.FindFirstValue("FirebaseUid");
         if (string.IsNullOrEmpty(firebaseUid))
             return Unauthorized(new ApiResponse<object> { Success = false, Message = "Firebase UID bulunamadı." });

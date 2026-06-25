@@ -18,6 +18,7 @@ public class AddVetToClinicRequest
     [MaxLength(100, ErrorMessage = "Şifre en fazla 100 karakter olabilir.")]
     public string Password { get; set; } = string.Empty;
 
+    [RegularExpression(@"^0?\d{10}$", ErrorMessage = "Geçerli bir telefon numarası giriniz (10-11 hane).")]
     [MaxLength(20, ErrorMessage = "Telefon numarası en fazla 20 karakter olabilir.")]
     public string? Phone { get; set; }
     
