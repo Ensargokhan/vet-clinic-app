@@ -158,7 +158,8 @@ public class VetService : IVetService
         if (appointment == null || appointment.VetId != vet.Id)
             throw new Exception("Randevu bulunamadı veya yetkiniz yok.");
 
-        // TODO: Durum geçiş kontrolleri
+        // Durum geçiş kuralları (tek kaynak: AppointmentStatusRules)
+        AppointmentStatusRules.EnsureTransition(appointment.Status, newStatus);
         appointment.Status = newStatus;
         if (notes != null) appointment.Notes = InputSanitizer.Sanitize(notes);
         

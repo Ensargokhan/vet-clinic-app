@@ -361,8 +361,10 @@ public class ClinicService : IClinicService
         if (appointment == null || appointment.ClinicId != clinic.Id)
             throw new Exception("Randevu bulunamadı veya yetkiniz yok.");
 
+        // Durum geçiş kuralları (hekim ile aynı kurallar)
+        AppointmentStatusRules.EnsureTransition(appointment.Status, newStatus);
         appointment.Status = newStatus;
-        if (notes != null) appointment.Notes = notes;
+        if (notes != null) appointment.Notes = InputSanitizer.Sanitize(notes);
         
         _appointmentRepository.Update(appointment);
         await _appointmentRepository.SaveChangesAsync();

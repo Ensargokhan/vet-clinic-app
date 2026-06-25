@@ -74,10 +74,16 @@ public class AppointmentService : IAppointmentService
             throw new UnauthorizedAccessException("Geçersiz hayvan ID veya erişim yetkiniz yok.");
         }
 
+        // Geçmiş tarihe randevu alınamaz
+        if (request.AppointmentDate <= DateTime.UtcNow)
+        {
+            throw new InvalidOperationException("Geçmiş bir tarih veya saat için randevu oluşturulamaz.");
+        }
+
         // Müsait slot kontrolü
         var dateOnly = request.AppointmentDate.Date;
         var availableSlots = await _vetService.GetAvailableSlotsAsync(request.VetId, dateOnly);
-        
+
         var isSlotAvailable = availableSlots.Any(s => s.Time == request.AppointmentDate.TimeOfDay && s.IsAvailable);
         if (!isSlotAvailable)
         {
@@ -87,6 +93,14 @@ public class AppointmentService : IAppointmentService
         var vet = await _vetRepository.GetByIdAsync(request.VetId);
         if (vet == null)
             throw new Exception("Hekim bulunamadı.");
+
+        // Yarış (TOCTOU) koruması: kayıttan hemen önce aynı hekim+tarih+saat için
+        // aktif (iptal edilmemiş) bir randevu oluşmuş mu son kez kontrol et.
+        var sameDayAppointments = await _appointmentRepository.GetAppointmentsByVetAndDateAsync(request.VetId, dateOnly);
+        if (sameDayAppointments.Any(a => a.AppointmentDate.TimeOfDay == request.AppointmentDate.TimeOfDay))
+        {
+            throw new InvalidOperationException("Bu saat az önce başka bir randevu tarafından alındı. Lütfen farklı bir saat seçin.");
+        }
 
         var appointment = new Appointment
         {

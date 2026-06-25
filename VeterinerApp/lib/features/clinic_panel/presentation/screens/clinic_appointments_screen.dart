@@ -161,6 +161,11 @@ class _ClinicAppointmentsScreenState extends State<ClinicAppointmentsScreen>
                   _updateStatus(appt['id'], 'completed', notesCtrl.text);
                 }),
                 const SizedBox(height: AppSpacing.sm),
+                _statusButton(sheetContext, 'Gelmedi', sheetContext.colors.warning, () {
+                  Navigator.pop(sheetContext);
+                  _updateStatus(appt['id'], 'no_show', notesCtrl.text);
+                }),
+                const SizedBox(height: AppSpacing.sm),
                 _statusButton(sheetContext, 'İptal Et', sheetContext.scheme.error, () {
                   Navigator.pop(sheetContext);
                   _updateStatus(appt['id'], 'cancelled', notesCtrl.text);
@@ -222,7 +227,9 @@ class _ClinicAppointmentsScreenState extends State<ClinicAppointmentsScreen>
     final timeStr = date != null ? DateFormat('HH:mm').format(date) : '';
     final dateStr = date != null ? DateFormat('dd MMM', 'tr_TR').format(date) : '';
     final primary = context.scheme.primary;
-    final canEdit = appt['status'] != 'completed' && appt['status'] != 'cancelled';
+    // Yalnız işlem yapılabilen (pending/confirmed) durumlarda düzenlenebilir;
+    // terminal durumlar (completed/cancelled/no_show/expired) düzenlenemez.
+    final canEdit = appt['status'] == 'pending' || appt['status'] == 'confirmed';
 
     return AppCard(
       child: Column(

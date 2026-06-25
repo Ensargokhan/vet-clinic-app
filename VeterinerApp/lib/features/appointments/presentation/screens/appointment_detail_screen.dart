@@ -113,7 +113,8 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     final appt = _appointment!;
     final date = DateTime.parse(appt['appointmentDate']);
     final status = appt['status']?.toString() ?? 'pending';
-    final isPending = status == 'pending';
+    // Sahip, bekleyen veya onaylanmış randevuyu iptal edebilir (tamamlanan hariç).
+    final canCancel = status == 'pending' || status == 'confirmed';
     final statusColor = AppointmentStatus.color(context, status);
 
     return SingleChildScrollView(
@@ -184,7 +185,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
             ),
           ),
 
-          if (isPending) ...[
+          if (canCancel) ...[
             const SizedBox(height: AppSpacing.xl),
             SizedBox(
               width: double.infinity,
