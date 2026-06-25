@@ -16,4 +16,9 @@ public class ClinicResponse
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
     public List<VetResponse>? Vets { get; set; }
+
+    // Arama sonuç kartlarını zenginleştirmek için
+    public List<string> Specialties { get; set; } = new();
+    public double? Rating { get; set; }
+    public int ReviewCount { get; set; }
 }

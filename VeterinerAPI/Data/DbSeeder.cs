@@ -61,7 +61,7 @@ public static class DbSeeder
             UserId = adminUser.Id, // Aynı kişi hem admin hem de doktor olarak eklendi
             ClinicId = clinic.Id,
             Title = "Uzm. Vet. Hekim",
-            Specialty = "Cerrahi ve Dahiliye",
+            Specialty = "Cerrahi",
             Bio = "10 yıllık tecrübesiyle sevimli dostlarımızın sağlığı için çalışmaktadır."
         };
         context.Vets.Add(vet);

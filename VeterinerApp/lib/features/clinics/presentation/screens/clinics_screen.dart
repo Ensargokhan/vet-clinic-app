@@ -61,24 +61,31 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   }
 
   Future<void> _loadFilterData() async {
+    // Şehirleri assetten yükle
     try {
-      // Şehirleri yükle
       final String citiesResponse = await rootBundle.loadString('assets/data/turkey_cities.json');
       final citiesData = await json.decode(citiesResponse);
-      
-      // Uzmanlık alanlarını yükle
-      final String specialtiesResponse = await rootBundle.loadString('assets/data/specialties.json');
-      final specialtiesData = await json.decode(specialtiesResponse);
 
       setState(() {
         _citiesData = citiesData['data'];
         _cities = _citiesData.map<String>((city) => city['name'].toString()).toList();
         _cities.sort(_trCompare);
-        
-        _specialties = List<String>.from(specialtiesData['specialties']);
       });
     } catch (e) {
-      debugPrint("Error loading filter data: $e");
+      debugPrint("Error loading cities: $e");
+    }
+
+    // Uzmanlık alanlarını backend'den (tek kaynak) yükle
+    try {
+      final dio = DioClient().dio;
+      final response = await dio.get('/specialties');
+      if (response.data['success'] == true) {
+        setState(() {
+          _specialties = List<String>.from(response.data['data']);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading specialties: $e");
     }
   }
 
@@ -379,7 +386,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               controller: _searchController,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Klinik adı ile ara...',
+                hintText: 'Klinik adı, şehir veya ilçe ile ara...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchQuery != null && _searchQuery!.isNotEmpty
                     ? IconButton(
@@ -503,6 +510,45 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                               ),
                             ],
                           ),
+                          if (clinic.rating != null) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.star, size: 14, color: Colors.amber),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${clinic.rating!.toStringAsFixed(1)} (${clinic.reviewCount})',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (clinic.specialties.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: clinic.specialties.take(3).map((s) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    s,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.primaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ],
                       ),
                     ),

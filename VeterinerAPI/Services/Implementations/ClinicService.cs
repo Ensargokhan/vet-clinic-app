@@ -66,7 +66,16 @@ public class ClinicService : IClinicService
                 Phone = c.Phone,
                 LogoUrl = c.LogoUrl,
                 Latitude = c.Latitude,
-                Longitude = c.Longitude
+                Longitude = c.Longitude,
+                Specialties = c.Vets
+                    .Where(v => v.IsActive && v.Specialty != null)
+                    .Select(v => v.Specialty!)
+                    .Distinct()
+                    .ToList(),
+                ReviewCount = c.Reviews.Count(r => r.IsVisible),
+                Rating = c.Reviews.Any(r => r.IsVisible)
+                    ? Math.Round(c.Reviews.Where(r => r.IsVisible).Average(r => r.Rating), 1)
+                    : (double?)null
             }).ToList(),
             Page = request.Page,
             PageSize = request.PageSize,

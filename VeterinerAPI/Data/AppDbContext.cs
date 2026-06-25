@@ -34,6 +34,10 @@ public class AppDbContext : DbContext
         {
             entity.Property(c => c.Latitude).HasPrecision(10, 8);
             entity.Property(c => c.Longitude).HasPrecision(11, 8);
+
+            // Arama/filtreleme için index'ler
+            entity.HasIndex(c => c.City);
+            entity.HasIndex(c => c.District);
         });
 
         // ===== VET =====
@@ -48,6 +52,10 @@ public class AppDbContext : DbContext
                   .WithMany(c => c.Vets)
                   .HasForeignKey(v => v.ClinicId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            // Uzmanlık filtresi (Vets.Any join) için index'ler
+            entity.HasIndex(v => v.ClinicId);
+            entity.HasIndex(v => v.Specialty);
         });
 
         // ===== ANIMAL =====

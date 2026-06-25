@@ -14,6 +14,7 @@ class ClinicVetsScreen extends StatefulWidget {
 
 class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
   List<dynamic> _vets = [];
+  List<String> _specialties = [];
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -21,6 +22,21 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
   void initState() {
     super.initState();
     _loadVets();
+    _loadSpecialties();
+  }
+
+  Future<void> _loadSpecialties() async {
+    try {
+      final dio = DioClient().dio;
+      final response = await dio.get('/specialties');
+      if (response.data['success'] == true && mounted) {
+        setState(() {
+          _specialties = List<String>.from(response.data['data']);
+        });
+      }
+    } catch (e) {
+      debugPrint('Uzmanlık listesi yüklenemedi: $e');
+    }
   }
 
   Future<void> _loadVets() async {
@@ -60,24 +76,13 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
     final passwordCtrl = TextEditingController();
     
     String selectedTitle = 'Veteriner Hekim';
-    String selectedSpecialty = 'Genel Veteriner Hekim (Uzmanlık Yok)';
+    final List<String> specialties = _specialties;
+    String? selectedSpecialty = specialties.isNotEmpty ? specialties.first : null;
 
     final List<String> titles = [
       'Veteriner Hekim',
       'Uzman Veteriner Hekim',
       'Dr. Veteriner Hekim',
-    ];
-
-    final List<String> specialties = [
-      'Genel Veteriner Hekim (Uzmanlık Yok)',
-      'Veteriner Cerrahi',
-      'Veteriner İç Hastalıkları (Dahiliye)',
-      'Veteriner Dermatoloji',
-      'Veteriner Onkoloji',
-      'Veteriner Diş Hekimliği',
-      'Veteriner Acil Tıp ve Yoğun Bakım',
-      'Veteriner Göz Hastalıkları',
-      'Egzotik Hayvan Hekimliği',
     ];
 
     showModalBottomSheet(
@@ -182,7 +187,7 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                           passwordCtrl.text,
                           phoneCtrl.text,
                           selectedTitle,
-                          selectedSpecialty,
+                          selectedSpecialty ?? '',
                         );
                       }
                     },

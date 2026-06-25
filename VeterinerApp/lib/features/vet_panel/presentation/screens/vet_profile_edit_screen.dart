@@ -28,38 +28,49 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
     'Dr. Veteriner Hekim',
   ];
 
-  final List<String> _specialties = [
-    'Genel Veteriner Hekim (Uzmanlık Yok)',
-    'Veteriner Cerrahi',
-    'Veteriner İç Hastalıkları (Dahiliye)',
-    'Veteriner Dermatoloji',
-    'Veteriner Onkoloji',
-    'Veteriner Diş Hekimliği',
-    'Veteriner Acil Tıp ve Yoğun Bakım',
-    'Veteriner Göz Hastalıkları',
-    'Egzotik Hayvan Hekimliği',
-  ];
+  // Uzmanlık listesi backend'den (tek kaynak) yüklenir
+  List<String> _specialties = [];
 
   late String _selectedTitle;
-  late String _selectedSpecialty;
+  String? _selectedSpecialty;
   late TextEditingController _bioController;
   late TextEditingController _phoneController;
 
   @override
   void initState() {
     super.initState();
-    
+
     final profile = widget.profileData;
-    
+
     final fetchedTitle = profile?['title'] ?? '';
     _selectedTitle = _titles.contains(fetchedTitle) ? fetchedTitle : 'Veteriner Hekim';
 
-    final fetchedSpec = profile?['specialty'] ?? '';
-    _selectedSpecialty = _specialties.contains(fetchedSpec) ? fetchedSpec : 'Genel Veteriner Hekim (Uzmanlık Yok)';
+    final fetchedSpec = (profile?['specialty'] ?? '').toString();
+    _selectedSpecialty = fetchedSpec.isNotEmpty ? fetchedSpec : null;
 
     _profilePhotoUrl = profile?['profilePhoto'];
     _bioController = TextEditingController(text: profile?['bio'] ?? '');
     _phoneController = TextEditingController(text: profile?['phone'] ?? '');
+
+    _loadSpecialties();
+  }
+
+  Future<void> _loadSpecialties() async {
+    try {
+      final dio = DioClient().dio;
+      final response = await dio.get('/specialties');
+      if (response.data['success'] == true && mounted) {
+        final list = List<String>.from(response.data['data']);
+        // Mevcut kayıtlı uzmanlık kanonik listede yoksa, dropdown patlamasın diye
+        // listeye geçici olarak eklenir (hekim isterse kanonik birini seçer).
+        if (_selectedSpecialty != null && _selectedSpecialty!.isNotEmpty && !list.contains(_selectedSpecialty)) {
+          list.insert(0, _selectedSpecialty!);
+        }
+        setState(() => _specialties = list);
+      }
+    } catch (e) {
+      debugPrint('Uzmanlık listesi yüklenemedi: $e');
+    }
   }
 
   @override
@@ -213,7 +224,9 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Uzmanlık', prefixIcon: Icon(Icons.medical_services)),
                       isExpanded: true,
-                      value: _selectedSpecialty,
+                      // Liste API'den gelene kadar değer items içinde olmayabilir; o ana dek null göster
+                      value: _specialties.contains(_selectedSpecialty) ? _selectedSpecialty : null,
+                      hint: const Text('Uzmanlık seçin'),
                       items: _specialties.map((s) => DropdownMenuItem(value: s, child: Text(s, overflow: TextOverflow.ellipsis))).toList(),
                       onChanged: (val) {
                         if (val != null) setState(() => _selectedSpecialty = val);

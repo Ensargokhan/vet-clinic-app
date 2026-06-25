@@ -63,20 +63,38 @@ public class ClinicRepository : Repository<Clinic>, IClinicRepository
         var query = _dbSet.Where(c => c.IsActive).AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(c => c.Name.Contains(search));
+        {
+            var s = search.Trim();
+            query = query.Where(c =>
+                c.Name.Contains(s) ||
+                (c.City != null && c.City.Contains(s)) ||
+                (c.District != null && c.District.Contains(s)) ||
+                (c.Address != null && c.Address.Contains(s)));
+        }
 
         if (!string.IsNullOrWhiteSpace(city))
-            query = query.Where(c => c.City == city);
+        {
+            var ct = city.Trim();
+            query = query.Where(c => c.City == ct);
+        }
 
         if (!string.IsNullOrWhiteSpace(district))
-            query = query.Where(c => c.District == district);
+        {
+            var dt = district.Trim();
+            query = query.Where(c => c.District == dt);
+        }
 
         if (!string.IsNullOrWhiteSpace(specialty))
-            query = query.Where(c => c.Vets.Any(v => v.IsActive && v.Specialty != null && v.Specialty == specialty));
+        {
+            var sp = specialty.Trim();
+            query = query.Where(c => c.Vets.Any(v => v.IsActive && v.Specialty != null && v.Specialty == sp));
+        }
 
         var totalCount = await query.CountAsync();
 
         var items = await query
+            .Include(c => c.Vets)
+            .Include(c => c.Reviews)
             .OrderBy(c => c.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

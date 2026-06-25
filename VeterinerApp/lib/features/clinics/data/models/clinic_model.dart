@@ -13,6 +13,9 @@ class ClinicModel {
   final double? latitude;
   final double? longitude;
   final List<VetModel>? vets;
+  final List<String> specialties;
+  final double? rating;
+  final int reviewCount;
 
   ClinicModel({
     required this.id,
@@ -27,6 +30,9 @@ class ClinicModel {
     this.latitude,
     this.longitude,
     this.vets,
+    this.specialties = const [],
+    this.rating,
+    this.reviewCount = 0,
   });
 
   factory ClinicModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +51,11 @@ class ClinicModel {
       vets: json['vets'] != null
           ? (json['vets'] as List).map((v) => VetModel.fromJson(v)).toList()
           : null,
+      specialties: json['specialties'] != null
+          ? (json['specialties'] as List).map((e) => e.toString()).toList()
+          : const [],
+      rating: json['rating'] != null ? (json['rating'] as num).toDouble() : null,
+      reviewCount: json['reviewCount'] ?? 0,
     );
   }
 }
