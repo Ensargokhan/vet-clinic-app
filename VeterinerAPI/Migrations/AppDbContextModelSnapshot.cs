@@ -99,6 +99,46 @@ namespace VeterinerAPI.Migrations
                     b.ToTable("animals");
                 });
 
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Announcement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("body");
+
+                    b.Property<int>("ClinicId")
+                        .HasColumnType("int")
+                        .HasColumnName("clinic_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClinicId");
+
+                    b.ToTable("announcements");
+                });
+
             modelBuilder.Entity("VeterinerAPI.Models.Entities.Appointment", b =>
                 {
                     b.Property<int>("Id")
@@ -139,6 +179,10 @@ namespace VeterinerAPI.Migrations
                     b.Property<string>("Reason")
                         .HasColumnType("longtext")
                         .HasColumnName("reason");
+
+                    b.Property<bool>("ReminderSent")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("reminder_sent");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -247,6 +291,10 @@ namespace VeterinerAPI.Migrations
 
                     b.HasIndex("AdminUserId");
 
+                    b.HasIndex("City");
+
+                    b.HasIndex("District");
+
                     b.ToTable("clinics");
                 });
 
@@ -292,6 +340,142 @@ namespace VeterinerAPI.Migrations
                     b.ToTable("clinic_reviews");
                 });
 
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Conversation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("LastMessageAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("last_message_at");
+
+                    b.Property<string>("LastMessagePreview")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
+                        .HasColumnName("last_message_preview");
+
+                    b.Property<int>("OwnerUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("VetId")
+                        .HasColumnType("int")
+                        .HasColumnName("vet_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VetId");
+
+                    b.HasIndex("OwnerUserId", "VetId")
+                        .IsUnique();
+
+                    b.ToTable("conversations");
+                });
+
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)")
+                        .HasColumnName("body");
+
+                    b.Property<int>("ConversationId")
+                        .HasColumnType("int")
+                        .HasColumnName("conversation_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_read");
+
+                    b.Property<int>("SenderUserId")
+                        .HasColumnType("int")
+                        .HasColumnName("sender_user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.HasIndex("ConversationId", "CreatedAt");
+
+                    b.HasIndex("ConversationId", "IsRead");
+
+                    b.ToTable("messages");
+                });
+
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_read");
+
+                    b.Property<int?>("RelatedId")
+                        .HasColumnType("int")
+                        .HasColumnName("related_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("type");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("notifications");
+                });
+
             modelBuilder.Entity("VeterinerAPI.Models.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -310,6 +494,11 @@ namespace VeterinerAPI.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)")
                         .HasColumnName("email");
+
+                    b.Property<string>("FcmToken")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("fcm_token");
 
                     b.Property<string>("FirebaseUid")
                         .IsRequired()
@@ -392,6 +581,10 @@ namespace VeterinerAPI.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("notes");
 
+                    b.Property<bool>("ReminderSent")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("reminder_sent");
+
                     b.Property<string>("VaccineName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -463,6 +656,8 @@ namespace VeterinerAPI.Migrations
 
                     b.HasIndex("ClinicId");
 
+                    b.HasIndex("Specialty");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("vets");
@@ -517,6 +712,17 @@ namespace VeterinerAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Announcement", b =>
+                {
+                    b.HasOne("VeterinerAPI.Models.Entities.Clinic", "Clinic")
+                        .WithMany()
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Clinic");
                 });
 
             modelBuilder.Entity("VeterinerAPI.Models.Entities.Appointment", b =>
@@ -584,6 +790,55 @@ namespace VeterinerAPI.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Conversation", b =>
+                {
+                    b.HasOne("VeterinerAPI.Models.Entities.User", "OwnerUser")
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("VeterinerAPI.Models.Entities.Vet", "Vet")
+                        .WithMany()
+                        .HasForeignKey("VetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("OwnerUser");
+
+                    b.Navigation("Vet");
+                });
+
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Message", b =>
+                {
+                    b.HasOne("VeterinerAPI.Models.Entities.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("VeterinerAPI.Models.Entities.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Notification", b =>
+                {
+                    b.HasOne("VeterinerAPI.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("VeterinerAPI.Models.Entities.Vaccine", b =>
                 {
                     b.HasOne("VeterinerAPI.Models.Entities.Animal", "Animal")
@@ -646,6 +901,11 @@ namespace VeterinerAPI.Migrations
                     b.Navigation("Reviews");
 
                     b.Navigation("Vets");
+                });
+
+            modelBuilder.Entity("VeterinerAPI.Models.Entities.Conversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("VeterinerAPI.Models.Entities.User", b =>

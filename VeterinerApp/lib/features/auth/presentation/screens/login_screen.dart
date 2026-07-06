@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/fcm_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 
@@ -36,6 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
       
       if (mounted) {
         if (response.data['success'] == true) {
+          // Giriş başarılı → FCM token'ını backend'e kaydet
+          FcmService().registerToken();
           final role = response.data['data']['role'];
           if (role == 'clinic_admin') {
             context.go('/clinic-home');

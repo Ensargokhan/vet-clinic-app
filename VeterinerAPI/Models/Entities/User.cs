@@ -38,6 +38,11 @@ public class User
     [Column("profile_photo")]
     public string? ProfilePhoto { get; set; }
 
+    // Push bildirim için cihaz kaydı (FCM). Tek-cihaz varsayımı; çıkışta temizlenir.
+    [MaxLength(255)]
+    [Column("fcm_token")]
+    public string? FcmToken { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

@@ -12,17 +12,20 @@ public class AppointmentService : IAppointmentService
     private readonly IAnimalRepository _animalRepository;
     private readonly IVetRepository _vetRepository;
     private readonly IVetService _vetService;
+    private readonly INotificationService _notificationService;
 
     public AppointmentService(
-        IAppointmentRepository appointmentRepository, 
-        IAnimalRepository animalRepository, 
+        IAppointmentRepository appointmentRepository,
+        IAnimalRepository animalRepository,
         IVetRepository vetRepository,
-        IVetService vetService)
+        IVetService vetService,
+        INotificationService notificationService)
     {
         _appointmentRepository = appointmentRepository;
         _animalRepository = animalRepository;
         _vetRepository = vetRepository;
         _vetService = vetService;
+        _notificationService = notificationService;
     }
 
     public async Task<IEnumerable<AppointmentResponse>> GetAppointmentsByUserAsync(int userId)
@@ -116,6 +119,16 @@ public class AppointmentService : IAppointmentService
 
         await _appointmentRepository.AddAsync(appointment);
         await _appointmentRepository.SaveChangesAsync();
+
+        // Hekime "yeni randevu talebi" bildirimi
+        var dateStr = appointment.AppointmentDate.ToString("dd.MM.yyyy HH:mm");
+        await _notificationService.NotifyAsync(
+            vet.UserId,
+            "Yeni randevu talebi",
+            $"{animal.Name} için {dateStr} tarihine yeni bir randevu talebi var.",
+            "appointment_created",
+            appointment.Id);
+
         return appointment.Id;
     }
 
@@ -135,6 +148,20 @@ public class AppointmentService : IAppointmentService
         appointment.Status = "cancelled";
         _appointmentRepository.Update(appointment);
         await _appointmentRepository.SaveChangesAsync();
+
+        // Hekime "randevu iptal edildi" bildirimi
+        var vet = await _vetRepository.GetByIdAsync(appointment.VetId);
+        if (vet != null)
+        {
+            var dateStr = appointment.AppointmentDate.ToString("dd.MM.yyyy HH:mm");
+            await _notificationService.NotifyAsync(
+                vet.UserId,
+                "Randevu iptal edildi",
+                $"{dateStr} tarihli bir randevu hasta sahibi tarafından iptal edildi.",
+                "appointment_status",
+                appointment.Id);
+        }
+
         return true;
     }
 }

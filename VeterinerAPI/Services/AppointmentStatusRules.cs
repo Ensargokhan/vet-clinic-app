@@ -65,6 +65,9 @@ public static class AppointmentStatusRules
             $"Randevu '{fromLabel}' durumundan '{toLabel}' durumuna geçirilemez.");
     }
 
+    /// <summary>Durumun kullanıcıya gösterilecek Türkçe etiketi.</summary>
+    public static string ToTurkishLabel(string status) => ToTurkish(status);
+
     private static string ToTurkish(string status) => status switch
     {
         Pending => "Bekliyor",

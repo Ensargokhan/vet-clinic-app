@@ -1,4 +1,5 @@
 using VeterinerAPI.DTOs.Vaccines;
+using VeterinerAPI.Helpers;
 using VeterinerAPI.Models.Entities;
 using VeterinerAPI.Repositories.Interfaces;
 using VeterinerAPI.Services.Interfaces;
@@ -79,22 +80,74 @@ public class VaccineService : IVaccineService
         });
     }
 
-    public async Task<int> CreateVaccineAsync(VaccineRequest request, int? vetId)
+    public async Task<int> CreateVaccineAsync(VaccineRequest request, int userId, string userRole)
     {
+        // Aşıyı yalnız hekim veya klinik yöneticisi ekleyebilir (Update/Delete ile tutarlı)
+        if (userRole != "vet" && userRole != "clinic_admin")
+        {
+            throw new UnauthorizedAccessException("Aşıları sadece hekimler ekleyebilir.");
+        }
+
+        ValidateDates(request);
+
+        // Hayvan gerçekten var mı? (geçersiz animalId ile FK hatası yerine anlamlı 404)
+        var animal = await _animalRepository.GetByIdAsync(request.AnimalId);
+        if (animal == null || !animal.IsActive)
+            throw new KeyNotFoundException("Hayvan bulunamadı.");
+
+        // Yetki: yalnız bu hayvanla randevusu olan hekim/klinik aşı ekleyebilir
+        // (GetVaccinesByAnimalAsync ile birebir aynı randevu-linki deseni)
+        int? vetId = null;
+        if (userRole == "vet")
+        {
+            var vet = await _vetRepository.FirstOrDefaultAsync(v => v.UserId == userId);
+            if (vet == null)
+                throw new UnauthorizedAccessException("Hekim profili bulunamadı.");
+
+            var hasAppointment = await _appointmentRepository.AnyAsync(a =>
+                a.VetId == vet.Id && a.AnimalId == request.AnimalId);
+            if (!hasAppointment)
+                throw new UnauthorizedAccessException("Bu hayvana aşı ekleme yetkiniz yok.");
+
+            vetId = vet.Id; // ekleyen hekim aşıya atansın (VetName dolu gelsin)
+        }
+        else // clinic_admin
+        {
+            var clinic = await _clinicRepository.FirstOrDefaultAsync(c => c.AdminUserId == userId);
+            if (clinic == null)
+                throw new UnauthorizedAccessException("Klinik profili bulunamadı.");
+
+            var hasAppointment = await _appointmentRepository.AnyAsync(a =>
+                a.ClinicId == clinic.Id && a.AnimalId == request.AnimalId);
+            if (!hasAppointment)
+                throw new UnauthorizedAccessException("Bu hayvana aşı ekleme yetkiniz yok.");
+        }
+
         var vaccine = new Vaccine
         {
             AnimalId = request.AnimalId,
             VetId = vetId,
-            VaccineName = request.VaccineName,
+            VaccineName = InputSanitizer.Sanitize(request.VaccineName)!,
             AdministeredDate = request.AdministeredDate,
             NextDueDate = request.NextDueDate,
-            BatchNumber = request.BatchNumber,
-            Notes = request.Notes
+            BatchNumber = InputSanitizer.Sanitize(request.BatchNumber),
+            Notes = InputSanitizer.Sanitize(request.Notes)
         };
 
         await _vaccineRepository.AddAsync(vaccine);
         await _vaccineRepository.SaveChangesAsync();
         return vaccine.Id;
+    }
+
+    // Aşı tarihleri için ortak kural: gelecek aşılanma tarihi ve sıralama kontrolü (Create+Update)
+    private static void ValidateDates(VaccineRequest request)
+    {
+        if (request.AdministeredDate.Date > DateTime.UtcNow.Date)
+            throw new ArgumentException("Aşılanma tarihi gelecekte olamaz.");
+
+        if (request.NextDueDate.HasValue &&
+            request.NextDueDate.Value.Date <= request.AdministeredDate.Date)
+            throw new ArgumentException("Sonraki aşı tarihi, aşılanma tarihinden sonra olmalıdır.");
     }
 
     public async Task<bool> UpdateVaccineAsync(int id, VaccineRequest request, string userRole)
@@ -104,14 +157,16 @@ public class VaccineService : IVaccineService
             throw new UnauthorizedAccessException("Aşıları sadece hekimler güncelleyebilir.");
         }
 
+        ValidateDates(request);
+
         var vaccine = await _vaccineRepository.GetByIdAsync(id);
         if (vaccine == null) return false;
 
-        vaccine.VaccineName = request.VaccineName;
+        vaccine.VaccineName = InputSanitizer.Sanitize(request.VaccineName)!;
         vaccine.AdministeredDate = request.AdministeredDate;
         vaccine.NextDueDate = request.NextDueDate;
-        vaccine.BatchNumber = request.BatchNumber;
-        vaccine.Notes = request.Notes;
+        vaccine.BatchNumber = InputSanitizer.Sanitize(request.BatchNumber);
+        vaccine.Notes = InputSanitizer.Sanitize(request.Notes);
 
         _vaccineRepository.Update(vaccine);
         await _vaccineRepository.SaveChangesAsync();

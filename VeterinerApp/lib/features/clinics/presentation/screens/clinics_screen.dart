@@ -13,6 +13,7 @@ import '../../../../shared/widgets/app_chip.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../../shared/widgets/notification_bell.dart';
 import '../../data/models/clinic_model.dart';
 
 class ClinicsScreen extends StatefulWidget {
@@ -356,6 +357,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
       appBar: AppBar(
         title: const Text('Anlaşmalı Klinikler'),
         actions: [
+          const NotificationBell(),
           IconButton(
             icon: Stack(
               children: [

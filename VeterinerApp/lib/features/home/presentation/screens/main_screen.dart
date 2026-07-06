@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../clinics/presentation/screens/clinics_screen.dart';
 import '../../../appointments/presentation/screens/appointments_screen.dart';
 import '../../../animals/presentation/screens/animals_screen.dart';
+import '../../../messaging/presentation/screens/messages_list_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
+import '../../../../shared/widgets/messages_nav_icon.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,6 +20,7 @@ class _MainScreenState extends State<MainScreen> {
     ClinicsScreen(),
     AppointmentsScreen(),
     AnimalsScreen(),
+    MessagesListScreen(),
     ProfileScreen(),
   ];
 
@@ -50,6 +53,10 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.pets_outlined),
             selectedIcon: Icon(Icons.pets),
             label: 'Hayvanlarım',
+          ),
+          NavigationDestination(
+            icon: MessagesNavIcon(),
+            label: 'Mesajlar',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

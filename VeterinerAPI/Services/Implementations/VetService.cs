@@ -11,17 +11,20 @@ public class VetService : IVetService
     private readonly IAppointmentRepository _appointmentRepository;
     private readonly IUserRepository _userRepository;
     private readonly VeterinerAPI.Data.AppDbContext _context;
+    private readonly INotificationService _notificationService;
 
     public VetService(
-        IVetRepository vetRepository, 
+        IVetRepository vetRepository,
         IAppointmentRepository appointmentRepository,
         IUserRepository userRepository,
-        VeterinerAPI.Data.AppDbContext context)
+        VeterinerAPI.Data.AppDbContext context,
+        INotificationService notificationService)
     {
         _vetRepository = vetRepository;
         _appointmentRepository = appointmentRepository;
         _userRepository = userRepository;
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<IEnumerable<VetScheduleResponse>> GetVetScheduleAsync(int vetId)
@@ -162,10 +165,26 @@ public class VetService : IVetService
         AppointmentStatusRules.EnsureTransition(appointment.Status, newStatus);
         appointment.Status = newStatus;
         if (notes != null) appointment.Notes = InputSanitizer.Sanitize(notes);
-        
+
         _appointmentRepository.Update(appointment);
         await _appointmentRepository.SaveChangesAsync();
+
+        // Randevu sahibine durum bildirimi
+        await NotifyOwnerStatusAsync(appointment, newStatus);
         return true;
+    }
+
+    // Randevu sahibine "durumunuz güncellendi" bildirimi (hekim ve klinik ortak kullanır mantığı; burada hekim tarafı)
+    private async Task NotifyOwnerStatusAsync(VeterinerAPI.Models.Entities.Appointment appointment, string newStatus)
+    {
+        var label = AppointmentStatusRules.ToTurkishLabel(newStatus);
+        var dateStr = appointment.AppointmentDate.ToString("dd.MM.yyyy HH:mm");
+        await _notificationService.NotifyAsync(
+            appointment.OwnerId,
+            "Randevu durumu güncellendi",
+            $"{dateStr} tarihli randevunuz: {label}.",
+            "appointment_status",
+            appointment.Id);
     }
 
     public async Task<IEnumerable<VetScheduleResponse>> GetMyScheduleAsync(string firebaseUid)

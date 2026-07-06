@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/services/fcm_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -42,6 +43,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           final response = await dio.get('/auth/me');
           if (mounted) {
             if (response.data['success'] == true) {
+              // Oturum geçerli → FCM token'ını backend'e kaydet
+              FcmService().registerToken();
               final role = response.data['data']['role'];
               if (role == 'clinic_admin') {
                 context.go('/clinic-home');

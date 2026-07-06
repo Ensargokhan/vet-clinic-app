@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/notification_bell.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
@@ -165,11 +166,18 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Merhaba, $adminName',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(color: onPrimary)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Merhaba, $adminName',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(color: onPrimary)),
+                  ),
+                  NotificationBell(color: onPrimary),
+                ],
+              ),
               const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [

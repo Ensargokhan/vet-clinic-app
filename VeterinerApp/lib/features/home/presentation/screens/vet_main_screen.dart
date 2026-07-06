@@ -3,6 +3,8 @@ import '../../../vet_panel/presentation/screens/vet_dashboard_screen.dart';
 import '../../../vet_panel/presentation/screens/vet_appointments_screen.dart';
 import '../../../vet_panel/presentation/screens/vet_schedule_screen.dart';
 import '../../../vet_panel/presentation/screens/vet_profile_screen.dart';
+import '../../../messaging/presentation/screens/messages_list_screen.dart';
+import '../../../../shared/widgets/messages_nav_icon.dart';
 
 class VetMainScreen extends StatefulWidget {
   const VetMainScreen({super.key});
@@ -18,6 +20,7 @@ class _VetMainScreenState extends State<VetMainScreen> {
     VetDashboardScreen(),
     VetAppointmentsScreen(),
     VetScheduleScreen(),
+    MessagesListScreen(),
     VetProfileScreen(),
   ];
 
@@ -47,6 +50,10 @@ class _VetMainScreenState extends State<VetMainScreen> {
             icon: Icon(Icons.schedule_outlined),
             selectedIcon: Icon(Icons.schedule),
             label: 'Programım',
+          ),
+          NavigationDestination(
+            icon: MessagesNavIcon(),
+            label: 'Mesajlar',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

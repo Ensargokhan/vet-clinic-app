@@ -17,6 +17,10 @@ public class AppDbContext : DbContext
     public DbSet<VetSchedule> VetSchedules { get; set; }
     public DbSet<Vaccine> Vaccines { get; set; }
     public DbSet<ClinicReview> ClinicReviews { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Conversation> Conversations { get; set; }
+    public DbSet<Message> Messages { get; set; }
+    public DbSet<Announcement> Announcements { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -121,6 +125,18 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
+        // ===== NOTIFICATION =====
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasOne(n => n.User)
+                  .WithMany()
+                  .HasForeignKey(n => n.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Kullanıcının bildirimlerini tarih sırasıyla çekmek için
+            entity.HasIndex(n => n.UserId);
+        });
+
         // ===== CLINIC REVIEW =====
         modelBuilder.Entity<ClinicReview>(entity =>
         {
@@ -133,6 +149,52 @@ public class AppDbContext : DbContext
                   .WithMany(u => u.ClinicReviews)
                   .HasForeignKey(cr => cr.UserId)
                   .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ===== CONVERSATION =====
+        modelBuilder.Entity<Conversation>(entity =>
+        {
+            entity.HasOne(c => c.OwnerUser)
+                  .WithMany()
+                  .HasForeignKey(c => c.OwnerUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(c => c.Vet)
+                  .WithMany()
+                  .HasForeignKey(c => c.VetId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Bir owner–hekim çifti için tek konuşma
+            entity.HasIndex(c => new { c.OwnerUserId, c.VetId }).IsUnique();
+        });
+
+        // ===== MESSAGE =====
+        modelBuilder.Entity<Message>(entity =>
+        {
+            entity.HasOne(m => m.Conversation)
+                  .WithMany(c => c.Messages)
+                  .HasForeignKey(m => m.ConversationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.Sender)
+                  .WithMany()
+                  .HasForeignKey(m => m.SenderUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Konuşma mesajlarını sırayla çekmek + okunmamış sorgusu için
+            entity.HasIndex(m => new { m.ConversationId, m.CreatedAt });
+            entity.HasIndex(m => new { m.ConversationId, m.IsRead });
+        });
+
+        // ===== ANNOUNCEMENT =====
+        modelBuilder.Entity<Announcement>(entity =>
+        {
+            entity.HasOne(a => a.Clinic)
+                  .WithMany()
+                  .HasForeignKey(a => a.ClinicId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(a => a.ClinicId);
         });
     }
 

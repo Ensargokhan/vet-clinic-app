@@ -6,9 +6,12 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/info_row.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../../shared/widgets/section_header.dart';
+import '../../../vaccines/data/models/vaccine_model.dart';
 
 class AnimalDetailScreen extends StatefulWidget {
   final int animalId;
@@ -23,10 +26,31 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
   bool _isLoading = true;
   String? _error;
 
+  List<VaccineModel> _vaccines = [];
+  bool _vaccinesLoading = true;
+
   @override
   void initState() {
     super.initState();
     _fetchAnimal();
+    _fetchVaccines();
+  }
+
+  Future<void> _fetchVaccines() async {
+    setState(() => _vaccinesLoading = true);
+    try {
+      final response =
+          await DioClient().dio.get('/vaccines/animal/${widget.animalId}');
+      if (response.data['success'] == true && mounted) {
+        final List<dynamic> data = response.data['data'] ?? [];
+        setState(() {
+          _vaccines = data.map((e) => VaccineModel.fromJson(e)).toList();
+          _vaccinesLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _vaccinesLoading = false);
+    }
   }
 
   Future<void> _fetchAnimal() async {
@@ -94,6 +118,72 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
         );
       }
     }
+  }
+
+  Widget _buildVaccineSection() {
+    if (_vaccinesLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_vaccines.isEmpty) {
+      return const EmptyState(
+        icon: Icons.vaccines_outlined,
+        message: 'Henüz aşı kaydı yok.',
+      );
+    }
+    return AppCard(
+      child: Column(
+        children: [
+          for (int i = 0; i < _vaccines.length; i++) ...[
+            if (i > 0) const Divider(),
+            _vaccineTile(_vaccines[i]),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _vaccineTile(VaccineModel v) {
+    final administered = DateFormat('dd.MM.yyyy').format(v.administeredDate);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.vaccines_outlined, size: 18, color: context.scheme.primary),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(v.vaccineName,
+                  style: Theme.of(context).textTheme.titleMedium),
+            ),
+            if (v.isDueSoon)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm, vertical: 2),
+                decoration: BoxDecoration(
+                  color: context.colors.warning.withOpacity(0.15),
+                  borderRadius: AppRadius.pillAll,
+                ),
+                child: Text('Yaklaşıyor',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: context.colors.warning,
+                        fontWeight: FontWeight.w600)),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text('Yapılış: $administered',
+            style: Theme.of(context).textTheme.bodyMedium),
+        if (v.nextDueDate != null)
+          Text('Sonraki: ${DateFormat('dd.MM.yyyy').format(v.nextDueDate!)}',
+              style: Theme.of(context).textTheme.bodyMedium),
+        if (v.vetName != null && v.vetName!.isNotEmpty)
+          Text('Uygulayan: ${v.vetName}',
+              style: Theme.of(context).textTheme.labelSmall),
+      ],
+    );
   }
 
   String _calculateAge(String? birthDateStr) {
@@ -222,6 +312,10 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.xl),
+          const SectionHeader('Aşı Geçmişi'),
+          const SizedBox(height: AppSpacing.sm),
+          _buildVaccineSection(),
           const SizedBox(height: AppSpacing.xl),
           SizedBox(
             width: double.infinity,

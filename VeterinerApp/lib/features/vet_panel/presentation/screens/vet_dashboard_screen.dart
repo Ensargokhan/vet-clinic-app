@@ -10,6 +10,7 @@ import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../shared/widgets/section_header.dart';
 import '../../../../shared/widgets/stat_card.dart';
+import '../../../../shared/widgets/notification_bell.dart';
 import '../../../../shared/widgets/status_badge.dart';
 
 const String _imgBase = 'http://10.0.2.2:5295';
@@ -107,7 +108,10 @@ class _VetDashboardScreenState extends State<VetDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        actions: const [NotificationBell()],
+      ),
       body: _isLoading
           ? const LoadingIndicator()
           : _errorMessage != null

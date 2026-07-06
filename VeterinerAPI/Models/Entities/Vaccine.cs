@@ -35,6 +35,10 @@ public class Vaccine
     [Column("notes")]
     public string? Notes { get; set; }
 
+    // Aşı hatırlatması gönderildi mi? (VaccineReminderWorker tekrar göndermesin)
+    [Column("reminder_sent")]
+    public bool ReminderSent { get; set; } = false;
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

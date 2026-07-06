@@ -17,7 +17,14 @@ import '../../features/appointments/presentation/screens/appointments_screen.dar
 import '../../features/appointments/presentation/screens/create_appointment_screen.dart';
 import '../../features/appointments/presentation/screens/appointment_detail_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
+import '../../features/vaccines/presentation/screens/add_vaccine_screen.dart';
+import '../../features/vaccines/presentation/screens/animal_vaccines_screen.dart';
+import '../../features/vaccines/data/models/vaccine_model.dart';
+import '../../features/messaging/presentation/screens/messages_list_screen.dart';
+import '../../features/messaging/presentation/screens/chat_thread_screen.dart';
 import '../../features/clinic_panel/presentation/screens/clinic_profile_edit_screen.dart';
+import '../../features/clinic_panel/presentation/screens/clinic_announcements_screen.dart';
 import '../../features/vet_panel/presentation/screens/vet_profile_edit_screen.dart';
 
 class AppRouter {
@@ -82,6 +89,17 @@ class AppRouter {
         },
       ),
       GoRoute(
+        path: '/animals/:id/vaccines',
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          final extra = state.extra as Map<String, dynamic>?;
+          return AnimalVaccinesScreen(
+            animalId: id,
+            animalName: extra?['animalName'],
+          );
+        },
+      ),
+      GoRoute(
         path: '/appointments',
         builder: (context, state) => const AppointmentsScreen(),
       ),
@@ -108,11 +126,42 @@ class AppRouter {
         builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/messages',
+        builder: (context, state) => const MessagesListScreen(),
+      ),
+      GoRoute(
+        path: '/messages/:id',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+          final extra = state.extra as Map<String, dynamic>?;
+          return ChatThreadScreen(conversationId: id, peerName: extra?['peerName']);
+        },
+      ),
+      GoRoute(
+        path: '/vaccines/add',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return AddVaccineScreen(
+            animalId: extra?['animalId'] ?? 0,
+            animalName: extra?['animalName'],
+            vaccine: extra?['vaccine'] as VaccineModel?,
+          );
+        },
+      ),
+      GoRoute(
         path: '/clinic/profile/edit',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           return ClinicProfileEditScreen(profileData: extra);
         },
+      ),
+      GoRoute(
+        path: '/clinic/announcements',
+        builder: (context, state) => const ClinicAnnouncementsScreen(),
       ),
       GoRoute(
         path: '/vet/profile/edit',

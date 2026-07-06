@@ -40,6 +40,10 @@ public class Appointment
     [Column("notes")]
     public string? Notes { get; set; } // hekim notları
 
+    // Randevu hatırlatması gönderildi mi? (AppointmentReminderWorker tekrar göndermesin)
+    [Column("reminder_sent")]
+    public bool ReminderSent { get; set; } = false;
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

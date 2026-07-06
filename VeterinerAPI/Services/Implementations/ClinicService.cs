@@ -15,19 +15,22 @@ public class ClinicService : IClinicService
     private readonly IAppointmentRepository _appointmentRepository;
     private readonly IVetRepository _vetRepository;
     private readonly VeterinerAPI.Data.AppDbContext _context;
+    private readonly INotificationService _notificationService;
 
     public ClinicService(
         IClinicRepository clinicRepository,
         IUserRepository userRepository,
         IAppointmentRepository appointmentRepository,
         IVetRepository vetRepository,
-        VeterinerAPI.Data.AppDbContext context)
+        VeterinerAPI.Data.AppDbContext context,
+        INotificationService notificationService)
     {
         _clinicRepository = clinicRepository;
         _userRepository = userRepository;
         _appointmentRepository = appointmentRepository;
         _vetRepository = vetRepository;
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<IEnumerable<ClinicResponse>> GetAllActiveClinicsAsync()
@@ -365,9 +368,20 @@ public class ClinicService : IClinicService
         AppointmentStatusRules.EnsureTransition(appointment.Status, newStatus);
         appointment.Status = newStatus;
         if (notes != null) appointment.Notes = InputSanitizer.Sanitize(notes);
-        
+
         _appointmentRepository.Update(appointment);
         await _appointmentRepository.SaveChangesAsync();
+
+        // Randevu sahibine durum bildirimi
+        var label = AppointmentStatusRules.ToTurkishLabel(newStatus);
+        var dateStr = appointment.AppointmentDate.ToString("dd.MM.yyyy HH:mm");
+        await _notificationService.NotifyAsync(
+            appointment.OwnerId,
+            "Randevu durumu güncellendi",
+            $"{dateStr} tarihli randevunuz: {label}.",
+            "appointment_status",
+            appointment.Id);
+
         return true;
     }
 }

@@ -32,6 +32,10 @@ builder.Services.AddScoped<IVetRepository, VetRepository>();
 builder.Services.AddScoped<IAnimalRepository, AnimalRepository>();
 builder.Services.AddScoped<IVaccineRepository, VaccineRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
 
 // Services
 builder.Services.AddScoped<IFileService, FileService>();
@@ -41,9 +45,14 @@ builder.Services.AddScoped<IVetService, VetService>();
 builder.Services.AddScoped<IAnimalService, AnimalService>();
 builder.Services.AddScoped<IVaccineService, VaccineService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
 
 // Background Services
 builder.Services.AddHostedService<AppointmentStatusWorker>();
+builder.Services.AddHostedService<AppointmentReminderWorker>();
+builder.Services.AddHostedService<VaccineReminderWorker>();
 
 // CORS — Ortam bazlı yapılandırma
 builder.Services.AddCors(options =>

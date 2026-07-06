@@ -11,4 +11,11 @@ public interface IAppointmentRepository : IRepository<Appointment>
     Task<int> GetTodayAppointmentCountByClinicAsync(int clinicId);
     Task<int> GetPendingAppointmentCountByClinicAsync(int clinicId);
     Task<IEnumerable<Appointment>> GetAppointmentsByVetIdAsync(int vetId);
+
+    // Klinik duyurusu kitlesi: klinikte iptal olmayan randevusu olan farklı sahipler
+    Task<IEnumerable<int>> GetDistinctOwnerIdsByClinicAsync(int clinicId);
+
+    // Mesajlaşma kişi listesi (ortak randevu şartı)
+    Task<IEnumerable<Vet>> GetMessagableVetsForOwnerAsync(int ownerUserId);
+    Task<IEnumerable<User>> GetMessagableOwnersForVetAsync(int vetId);
 }

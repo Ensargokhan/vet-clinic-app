@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -280,6 +281,20 @@ class _VetAppointmentsScreenState extends State<VetAppointmentsScreen> {
                     .textTheme
                     .bodyMedium
                     ?.copyWith(fontStyle: FontStyle.italic)),
+          ],
+          if (apt['status'] == 'confirmed' || apt['status'] == 'completed') ...[
+            const SizedBox(height: AppSpacing.xs),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => context.push(
+                  '/animals/${apt['animalId']}/vaccines',
+                  extra: {'animalName': apt['animalName']},
+                ),
+                icon: const Icon(Icons.vaccines_outlined, size: 18),
+                label: const Text('Aşılar'),
+              ),
+            ),
           ],
         ],
       ),

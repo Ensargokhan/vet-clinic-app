@@ -38,10 +38,11 @@ public class VaccinesController : ControllerBase
     public async Task<IActionResult> AddVaccine([FromBody] VaccineRequest request)
     {
         if (!ModelState.IsValid) return BadRequest();
-        
-        int? vetId = null; 
+        if (!HttpContext.Items.TryGetValue("UserId", out var uidObj)) return Unauthorized();
+        int userId = (int)uidObj!;
+        string role = HttpContext.Items["UserRole"]?.ToString() ?? "owner";
 
-        var newVaccineId = await _vaccineService.CreateVaccineAsync(request, vetId);
+        var newVaccineId = await _vaccineService.CreateVaccineAsync(request, userId, role);
 
         return Ok(new ApiResponse<object>
         {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -9,6 +10,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/info_row.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../announcements/data/models/announcement_model.dart';
 import '../../data/models/clinic_model.dart';
 
 const String _imgBase = 'http://10.0.2.2:5295';
@@ -26,10 +28,29 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
   bool _isLoading = true;
   String? _error;
 
+  List<AnnouncementModel> _announcements = [];
+
   @override
   void initState() {
     super.initState();
     _fetchClinicDetails();
+    _fetchAnnouncements();
+  }
+
+  Future<void> _fetchAnnouncements() async {
+    try {
+      final response =
+          await DioClient().dio.get('/clinics/${widget.clinicId}/announcements');
+      if (response.data['success'] == true && mounted) {
+        final List<dynamic> data = response.data['data'] ?? [];
+        setState(() {
+          _announcements =
+              data.map((e) => AnnouncementModel.fromJson(e)).toList();
+        });
+      }
+    } catch (_) {
+      // duyuru yüklenemezse sessiz geç (bölüm gizli kalır)
+    }
   }
 
   Future<void> _fetchClinicDetails() async {
@@ -57,6 +78,44 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Widget _buildAnnouncements() {
+    if (_announcements.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.xl),
+        Text('Duyurular', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: AppSpacing.md),
+        for (final a in _announcements) ...[
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.campaign_outlined,
+                        size: 18, color: context.scheme.primary),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(a.title,
+                          style: Theme.of(context).textTheme.titleMedium),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(a.body, style: Theme.of(context).textTheme.bodyMedium),
+                const SizedBox(height: AppSpacing.sm),
+                Text(DateFormat('dd.MM.yyyy').format(a.createdAt),
+                    style: Theme.of(context).textTheme.labelSmall),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+      ],
+    );
   }
 
   @override
@@ -122,6 +181,7 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
                   const SizedBox(height: AppSpacing.sm),
                   Text(clinic.description ?? 'Açıklama yok.',
                       style: Theme.of(context).textTheme.bodyLarge),
+                  _buildAnnouncements(),
                   const SizedBox(height: AppSpacing.xl),
                   Text('Veteriner Hekimlerimiz',
                       style: Theme.of(context).textTheme.titleLarge),
