@@ -9,6 +9,8 @@ import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import '../../../ai_assistant/data/models/ai_report_model.dart';
+import '../../../ai_assistant/presentation/widgets/ai_report_view.dart';
 
 class VetAppointmentsScreen extends StatefulWidget {
   const VetAppointmentsScreen({super.key});
@@ -141,6 +143,30 @@ class _VetAppointmentsScreenState extends State<VetAppointmentsScreen> {
         ),
       ),
     );
+  }
+
+  // Randevuya bağlı AI ön raporu tembel getir → bottom sheet; yoksa bilgi ver.
+  Future<void> _showAiReport(int appointmentId) async {
+    try {
+      final res = await DioClient()
+          .dio
+          .get('/ai/reports/by-appointment/$appointmentId');
+      if (res.data['success'] == true && mounted) {
+        AiReportView.showSheet(context, AiReportModel.fromJson(res.data['data']));
+      }
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final msg = e.response?.statusCode == 404
+          ? 'Bu randevuya bağlı ön rapor yok.'
+          : (e.response?.data?['message'] ?? 'Ön rapor getirilemedi.');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Beklenmeyen bir hata oluştu.')),
+        );
+      }
+    }
   }
 
   Widget _btn(BuildContext ctx, String label, Color color, VoidCallback onTap) {
@@ -284,16 +310,23 @@ class _VetAppointmentsScreenState extends State<VetAppointmentsScreen> {
           ],
           if (apt['status'] == 'confirmed' || apt['status'] == 'completed') ...[
             const SizedBox(height: AppSpacing.xs),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => context.push(
-                  '/animals/${apt['animalId']}/vaccines',
-                  extra: {'animalName': apt['animalName']},
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _showAiReport(apt['id']),
+                  icon: const Icon(Icons.smart_toy_outlined, size: 18),
+                  label: const Text('AI Ön Rapor'),
                 ),
-                icon: const Icon(Icons.vaccines_outlined, size: 18),
-                label: const Text('Aşılar'),
-              ),
+                TextButton.icon(
+                  onPressed: () => context.push(
+                    '/animals/${apt['animalId']}/vaccines',
+                    extra: {'animalName': apt['animalName']},
+                  ),
+                  icon: const Icon(Icons.vaccines_outlined, size: 18),
+                  label: const Text('Aşılar'),
+                ),
+              ],
             ),
           ],
         ],

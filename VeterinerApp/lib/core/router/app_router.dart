@@ -22,6 +22,7 @@ import '../../features/vaccines/presentation/screens/animal_vaccines_screen.dart
 import '../../features/vaccines/data/models/vaccine_model.dart';
 import '../../features/messaging/presentation/screens/messages_list_screen.dart';
 import '../../features/messaging/presentation/screens/chat_thread_screen.dart';
+import '../../features/ai_assistant/presentation/screens/ai_chat_screen.dart';
 import '../../features/clinic_panel/presentation/screens/clinic_profile_edit_screen.dart';
 import '../../features/clinic_panel/presentation/screens/clinic_announcements_screen.dart';
 import '../../features/vet_panel/presentation/screens/vet_profile_edit_screen.dart';
@@ -138,6 +139,16 @@ class AppRouter {
           final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
           final extra = state.extra as Map<String, dynamic>?;
           return ChatThreadScreen(conversationId: id, peerName: extra?['peerName']);
+        },
+      ),
+      GoRoute(
+        path: '/ai-chat',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return AiChatScreen(
+            animalId: extra?['animalId'] ?? 0,
+            animalName: extra?['animalName'],
+          );
         },
       ),
       GoRoute(

@@ -9,6 +9,7 @@ using VeterinerAPI.Repositories.Interfaces;
 using VeterinerAPI.Repositories.Implementations;
 using VeterinerAPI.Services.Interfaces;
 using VeterinerAPI.Services.Implementations;
+using VeterinerAPI.Services.Ai;
 using VeterinerAPI.BackgroundServices;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
@@ -36,6 +37,9 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
+builder.Services.AddScoped<IAiChatSessionRepository, AiChatSessionRepository>();
+builder.Services.AddScoped<IAiChatMessageRepository, AiChatMessageRepository>();
+builder.Services.AddScoped<IAiReportRepository, AiReportRepository>();
 
 // Services
 builder.Services.AddScoped<IFileService, FileService>();
@@ -48,6 +52,14 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
+builder.Services.AddScoped<IAiAssistantService, AiAssistantService>();
+
+// AI (Gemini) — yapılandırma + REST istemcisi (HttpClient)
+builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("GeminiAI"));
+builder.Services.AddHttpClient<IGeminiClient, GeminiClient>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
+});
 
 // Background Services
 builder.Services.AddHostedService<AppointmentStatusWorker>();
@@ -108,6 +120,15 @@ builder.Services.AddRateLimiter(options =>
     {
         opt.PermitLimit = 5;
         opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0;
+    });
+
+    // AI politikası: Gemini çağıran uçlar (chat/finalize) için 5 dakikada 20 istek (kota/maliyet koruması)
+    options.AddFixedWindowLimiter("AiPolicy", opt =>
+    {
+        opt.PermitLimit = 20;
+        opt.Window = TimeSpan.FromMinutes(5);
         opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         opt.QueueLimit = 0;
     });

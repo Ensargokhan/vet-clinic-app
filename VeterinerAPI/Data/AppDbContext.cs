@@ -21,6 +21,9 @@ public class AppDbContext : DbContext
     public DbSet<Conversation> Conversations { get; set; }
     public DbSet<Message> Messages { get; set; }
     public DbSet<Announcement> Announcements { get; set; }
+    public DbSet<AiChatSession> AiChatSessions { get; set; }
+    public DbSet<AiChatMessage> AiChatMessages { get; set; }
+    public DbSet<AiReport> AiReports { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -195,6 +198,62 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(a => a.ClinicId);
+        });
+
+        // ===== AI CHAT SESSION =====
+        modelBuilder.Entity<AiChatSession>(entity =>
+        {
+            entity.HasOne(s => s.User)
+                  .WithMany()
+                  .HasForeignKey(s => s.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(s => s.Animal)
+                  .WithMany()
+                  .HasForeignKey(s => s.AnimalId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(s => s.UserId);
+        });
+
+        // ===== AI CHAT MESSAGE =====
+        modelBuilder.Entity<AiChatMessage>(entity =>
+        {
+            entity.HasOne(m => m.Session)
+                  .WithMany(s => s.Messages)
+                  .HasForeignKey(m => m.SessionId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Oturum mesajlarını sırayla çekmek için
+            entity.HasIndex(m => new { m.SessionId, m.CreatedAt });
+        });
+
+        // ===== AI REPORT =====
+        modelBuilder.Entity<AiReport>(entity =>
+        {
+            entity.HasOne(r => r.Session)
+                  .WithMany()
+                  .HasForeignKey(r => r.SessionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.Animal)
+                  .WithMany()
+                  .HasForeignKey(r => r.AnimalId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.User)
+                  .WithMany()
+                  .HasForeignKey(r => r.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Randevu silinirse rapor kalsın ama bağ kopsun
+            entity.HasOne(r => r.Appointment)
+                  .WithMany()
+                  .HasForeignKey(r => r.AppointmentId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(r => r.AnimalId);
+            entity.HasIndex(r => r.AppointmentId);
         });
     }
 

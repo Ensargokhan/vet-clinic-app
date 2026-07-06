@@ -9,6 +9,8 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/info_row.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../ai_assistant/data/models/ai_report_model.dart';
+import '../../../ai_assistant/presentation/widgets/ai_report_view.dart';
 
 class AppointmentDetailScreen extends StatefulWidget {
   final int appointmentId;
@@ -20,6 +22,7 @@ class AppointmentDetailScreen extends StatefulWidget {
 
 class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
   Map<String, dynamic>? _appointment;
+  AiReportModel? _aiReport;
   bool _isLoading = true;
   String? _error;
 
@@ -27,6 +30,21 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
   void initState() {
     super.initState();
     _fetchAppointment();
+    _fetchAiReport();
+  }
+
+  // Randevuya bağlı AI ön raporu (varsa). Yoksa (404) sessizce geç.
+  Future<void> _fetchAiReport() async {
+    try {
+      final res = await DioClient()
+          .dio
+          .get('/ai/reports/by-appointment/${widget.appointmentId}');
+      if (res.data['success'] == true && mounted) {
+        setState(() => _aiReport = AiReportModel.fromJson(res.data['data']));
+      }
+    } catch (_) {
+      // rapor yok veya erişim yok — bölümü gösterme
+    }
   }
 
   Future<void> _fetchAppointment() async {
@@ -183,6 +201,11 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               ],
             ),
           ),
+
+          if (_aiReport != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            AppCard(child: AiReportView(report: _aiReport!)),
+          ],
 
           if (canCancel) ...[
             const SizedBox(height: AppSpacing.xl),

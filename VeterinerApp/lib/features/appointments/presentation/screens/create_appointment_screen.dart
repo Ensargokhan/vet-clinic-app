@@ -7,6 +7,9 @@ import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/info_row.dart';
+import '../../../../core/utils/ai_urgency.dart';
+import '../../../ai_assistant/data/models/ai_report_model.dart';
+import '../../../ai_assistant/presentation/widgets/ai_report_view.dart';
 
 const String _imgBase = 'http://10.0.2.2:5295';
 
@@ -41,6 +44,9 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
   List<dynamic> _myAnimals = [];
   bool _isLoadingAnimals = false;
   final _reasonController = TextEditingController();
+
+  // Step 4: AI Ön Muayene (opsiyonel)
+  AiReportModel? _aiReport;
 
   bool _isSubmitting = false;
 
@@ -143,12 +149,26 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate!);
       final appointmentDate = '${dateStr}T$_selectedTime:00Z';
 
-      await dio.post('/appointments', data: {
+      final response = await dio.post('/appointments', data: {
         'animalId': _selectedAnimalId,
         'vetId': _selectedVetId,
         'reason': _reasonController.text,
         'appointmentDate': appointmentDate,
       });
+
+      // AI ön rapor varsa oluşan randevuya bağla (best-effort — hata randevuyu bozmasın)
+      final appointmentId = response.data['data']?['appointmentId'];
+      if (_aiReport != null && appointmentId != null) {
+        try {
+          await dio.post('/ai/reports/${_aiReport!.id}/attach/$appointmentId');
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Randevu oluşturuldu; AI raporu bağlanamadı.')),
+            );
+          }
+        }
+      }
 
       if (mounted) {
         _showSuccessModal();
@@ -206,7 +226,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
   }
 
   void _nextStep() {
-    if (_currentStep < 3) {
+    if (_currentStep < 4) {
       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
       setState(() => _currentStep++);
     }
@@ -238,22 +258,22 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(4, (index) {
+        children: List.generate(5, (index) {
           final isActive = _currentStep == index;
           final isCompleted = _currentStep > index;
           final on = isActive || isCompleted;
           return Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 28,
+                height: 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: on ? primary : inactive,
                 ),
                 child: Center(
                   child: isCompleted
-                      ? Icon(Icons.check, color: context.scheme.onPrimary, size: 16)
+                      ? Icon(Icons.check, color: context.scheme.onPrimary, size: 14)
                       : Text(
                           '${index + 1}',
                           style: TextStyle(
@@ -263,8 +283,8 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                         ),
                 ),
               ),
-              if (index < 3)
-                Container(width: 40, height: 2, color: isCompleted ? primary : inactive),
+              if (index < 4)
+                Container(width: 24, height: 2, color: isCompleted ? primary : inactive),
             ],
           );
         }),
@@ -476,6 +496,8 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                   final primary = context.scheme.primary;
                   return GestureDetector(
                     onTap: () => setState(() {
+                      // Hayvan değişirse eski hayvana ait AI raporunu sıfırla
+                      if (_selectedAnimalId != animal['id']) _aiReport = null;
                       _selectedAnimalId = animal['id'];
                       _selectedAnimalInfo = animal;
                     }),
@@ -534,6 +556,94 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
     );
   }
 
+  Widget _buildPreExamStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _stepHeader('Ön Muayene', 'İsteğe bağlı: yapay zeka ile ön değerlendirme.'),
+          if (_selectedAnimalId == null)
+            const Text('Önce bir hayvan seçin.')
+          else if (_aiReport == null) ...[
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.smart_toy_outlined, color: context.scheme.primary),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text('Yapay Zeka ile Ön Muayene',
+                            style: Theme.of(context).textTheme.titleMedium),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Birkaç kısa soruyla ${_selectedAnimalInfo?['name'] ?? 'hayvanınız'} '
+                    'için hekiminize yardımcı olacak bir ön rapor hazırlayalım. '
+                    'Bu adım isteğe bağlıdır; dilerseniz "Devam Et" ile atlayabilirsiniz.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _startPreExam,
+                      icon: const Icon(Icons.chat_outlined),
+                      label: const Text('Ön Muayeneyi Başlat'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            AppCard(child: AiReportView(report: _aiReport!, compact: true)),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Icon(Icons.check_circle, size: 18, color: context.colors.success),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text('Belirti özeti randevu sebebine eklendi.',
+                      style: Theme.of(context).textTheme.bodyMedium),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextButton.icon(
+              onPressed: _startPreExam,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Yeniden Başlat'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _startPreExam() async {
+    if (_selectedAnimalId == null) return;
+    final report = await context.push<AiReportModel?>(
+      '/ai-chat',
+      extra: {
+        'animalId': _selectedAnimalId,
+        'animalName': _selectedAnimalInfo?['name'],
+      },
+    );
+    if (report != null && mounted) {
+      setState(() {
+        _aiReport = report;
+        // Belirti özetini randevu sebebine taşı (kullanıcı boş bıraktıysa)
+        if (_reasonController.text.trim().isEmpty) {
+          _reasonController.text = report.symptomsSummary;
+        }
+      });
+    }
+  }
+
   Widget _buildSummaryStep() {
     final vetName = _selectedVetInfo != null ? _selectedVetInfo!['fullName'] : 'Hekim ID: $_selectedVetId';
     final animalName = _selectedAnimalInfo != null ? _selectedAnimalInfo!['name'] : 'Hayvan ID: $_selectedAnimalId';
@@ -554,6 +664,12 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                 InfoRow(icon: Icons.pets, label: 'Hasta', value: animalName),
                 if (_reasonController.text.isNotEmpty)
                   InfoRow(icon: Icons.notes_outlined, label: 'Neden', value: _reasonController.text),
+                if (_aiReport != null)
+                  InfoRow(
+                    icon: Icons.smart_toy_outlined,
+                    label: 'AI Ön Rapor',
+                    value: 'Hazırlandı — Aciliyet: ${AiUrgency.label(_aiReport!.urgencyLevel)}',
+                  ),
               ],
             ),
           ),
@@ -629,6 +745,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                 _buildVetSelectionStep(),
                 _buildDateSelectionStep(),
                 _buildAnimalSelectionStep(),
+                _buildPreExamStep(),
                 _buildSummaryStep(),
               ],
             ),
@@ -649,7 +766,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                 )
               else
                 const SizedBox(width: 80),
-              if (_currentStep < 3)
+              if (_currentStep < 4)
                 ElevatedButton(
                   onPressed: _canGoNext() ? _nextStep : null,
                   style: ElevatedButton.styleFrom(
