@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/services/fcm_service.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
@@ -168,7 +167,7 @@ class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [primary, primary.withOpacity(0.82)],
+                    colors: [primary, primary.withValues(alpha: 0.82)],
                   ),
                 ),
                 child: Column(
@@ -194,7 +193,7 @@ class _ClinicProfileScreenState extends State<ClinicProfileScreen> {
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
-                            ?.copyWith(color: onPrimary.withOpacity(0.85))),
+                            ?.copyWith(color: onPrimary.withValues(alpha: 0.85))),
                   ],
                 ),
               ),

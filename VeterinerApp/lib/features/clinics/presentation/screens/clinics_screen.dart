@@ -34,7 +34,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   String? _error;
 
   int _currentPage = 1;
-  int _pageSize = 15;
+  final int _pageSize = 15;
   bool _hasNext = true;
 
   String? _searchQuery;
@@ -238,7 +238,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       labelText: 'Şehir Seçin',
                       border: OutlineInputBorder(),
                     ),
-                    value: _selectedCity,
+                    initialValue: _selectedCity,
                     items: [
                       const DropdownMenuItem<String>(
                         value: null,
@@ -265,7 +265,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       labelText: 'İlçe Seçin',
                       border: OutlineInputBorder(),
                     ),
-                    value: _selectedDistrict,
+                    initialValue: _selectedDistrict,
                     items: [
                       const DropdownMenuItem<String>(
                         value: null,
@@ -292,7 +292,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       labelText: 'Uzmanlık Alanı Seçin',
                       border: OutlineInputBorder(),
                     ),
-                    value: _selectedSpecialty,
+                    initialValue: _selectedSpecialty,
                     items: [
                       const DropdownMenuItem<String>(
                         value: null,
@@ -467,7 +467,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.1),
+              color: primary.withValues(alpha: 0.1),
               borderRadius: AppRadius.mdAll,
             ),
             child: clinic.logoUrl != null && clinic.logoUrl!.isNotEmpty

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
@@ -245,7 +245,7 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
           Center(
             child: CircleAvatar(
               radius: 50,
-              backgroundColor: primary.withOpacity(0.12),
+              backgroundColor: primary.withValues(alpha: 0.12),
               child: Icon(Icons.pets, size: 48, color: primary),
             ),
           ),
@@ -262,7 +262,7 @@ class _AnimalDetailScreenState extends State<AnimalDetailScreen> {
               padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md, vertical: AppSpacing.xs + 2),
               decoration: BoxDecoration(
-                color: accent.withOpacity(0.12),
+                color: accent.withValues(alpha: 0.12),
                 borderRadius: AppRadius.pillAll,
               ),
               child: Text(

@@ -136,14 +136,14 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: context.scheme.primary.withOpacity(0.12),
+                      color: context.scheme.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: _logoUrl != null
                           ? ClipOval(
                               child: Image.network(
-                                'http://10.0.2.2:5295${_logoUrl}',
+                                'http://10.0.2.2:5295$_logoUrl',
                                 width: 100,
                                 height: 100,
                                 fit: BoxFit.cover,

@@ -159,7 +159,7 @@ class _VetProfileScreenState extends State<VetProfileScreen> {
                       Center(
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundColor: context.scheme.primary.withOpacity(0.12),
+                          backgroundColor: context.scheme.primary.withValues(alpha: 0.12),
                           backgroundImage: _profile?['profilePhoto'] != null
                               ? NetworkImage('$_imgBase${_profile?['profilePhoto']}')
                               : null,

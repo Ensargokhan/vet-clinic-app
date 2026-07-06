@@ -152,7 +152,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [primary, primary.withOpacity(0.82)],
+          colors: [primary, primary.withValues(alpha: 0.82)],
         ),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppRadius.xl + 12),
@@ -181,13 +181,13 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
               const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
-                  Icon(Icons.local_hospital, color: onPrimary.withOpacity(0.85), size: 16),
+                  Icon(Icons.local_hospital, color: onPrimary.withValues(alpha: 0.85), size: 16),
                   const SizedBox(width: AppSpacing.sm),
                   Text(clinicName,
                       style: Theme.of(context)
                           .textTheme
                           .bodyLarge
-                          ?.copyWith(color: onPrimary.withOpacity(0.9))),
+                          ?.copyWith(color: onPrimary.withValues(alpha: 0.9))),
                 ],
               ),
             ],
@@ -211,7 +211,7 @@ class _ClinicDashboardScreenState extends State<ClinicDashboardScreen> {
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md, vertical: AppSpacing.sm),
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.12),
+              color: primary.withValues(alpha: 0.12),
               borderRadius: AppRadius.mdAll,
             ),
             child: Text(timeStr,

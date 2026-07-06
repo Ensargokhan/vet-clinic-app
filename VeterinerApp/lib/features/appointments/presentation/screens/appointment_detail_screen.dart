@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -127,7 +126,7 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
+              color: statusColor.withValues(alpha: 0.12),
               borderRadius: AppRadius.lgAll,
             ),
             child: Column(

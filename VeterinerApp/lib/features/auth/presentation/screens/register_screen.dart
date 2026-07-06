@@ -52,6 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Kayıt başarılı — Firebase oturumunu kapat ve login'e yönlendir
           await FirebaseAuth.instance.signOut();
           
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Kayıt başarılı! Lütfen giriş yapın.'),
@@ -68,6 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (e.code == 'weak-password') message = 'Şifre çok zayıf, en az 6 karakter girin.';
       if (e.code == 'invalid-email') message = 'Geçersiz e-posta adresi.';
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );

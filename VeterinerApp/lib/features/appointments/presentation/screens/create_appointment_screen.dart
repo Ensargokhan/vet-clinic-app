@@ -303,7 +303,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                     children: [
                       CircleAvatar(
                         radius: 24,
-                        backgroundColor: context.scheme.primary.withOpacity(0.12),
+                        backgroundColor: context.scheme.primary.withValues(alpha: 0.12),
                         backgroundImage: photo != null ? NetworkImage('$_imgBase$photo') : null,
                         child: photo == null
                             ? Icon(Icons.person, color: context.scheme.primary)
@@ -362,7 +362,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
               decoration: BoxDecoration(
                 border: Border.all(color: context.scheme.primary),
                 borderRadius: AppRadius.lgAll,
-                color: context.scheme.primary.withOpacity(0.06),
+                color: context.scheme.primary.withValues(alpha: 0.06),
               ),
               child: Row(
                 children: [
@@ -415,7 +415,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                         border: Border.all(
                           color: isSelected
                               ? primary
-                              : (isAvailable ? primary.withOpacity(0.3) : context.colors.outline),
+                              : (isAvailable ? primary.withValues(alpha: 0.3) : context.colors.outline),
                         ),
                         borderRadius: AppRadius.smAll,
                       ),
@@ -483,7 +483,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                       width: 140,
                       margin: const EdgeInsets.only(right: AppSpacing.lg),
                       decoration: BoxDecoration(
-                        color: isSelected ? primary.withOpacity(0.08) : context.scheme.surface,
+                        color: isSelected ? primary.withValues(alpha: 0.08) : context.scheme.surface,
                         borderRadius: AppRadius.lgAll,
                         border: Border.all(
                           color: isSelected ? primary : context.colors.outline,
@@ -495,7 +495,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
                         children: [
                           CircleAvatar(
                             radius: 36,
-                            backgroundColor: primary.withOpacity(0.12),
+                            backgroundColor: primary.withValues(alpha: 0.12),
                             backgroundImage: animal['photoUrl'] != null
                                 ? NetworkImage(animal['photoUrl'])
                                 : null,
@@ -593,7 +593,7 @@ class _CreateAppointmentScreenState extends State<CreateAppointmentScreen> {
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: selected
-                ? context.scheme.primary.withOpacity(0.08)
+                ? context.scheme.primary.withValues(alpha: 0.08)
                 : context.scheme.surface,
             border: Border.all(
               color: selected ? context.scheme.primary : context.colors.outline,

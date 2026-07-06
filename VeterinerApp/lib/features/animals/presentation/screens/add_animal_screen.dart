@@ -106,7 +106,7 @@ class _AddAnimalScreenState extends State<AddAnimalScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               DropdownButtonFormField<String>(
-                value: _selectedGender,
+                initialValue: _selectedGender,
                 decoration: const InputDecoration(
                   labelText: 'Cinsiyet (Opsiyonel)',
                   prefixIcon: Icon(Icons.transgender),

@@ -145,6 +145,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
           );
           // Güvenli çıkış ve logine yönlendirme
           await FirebaseAuth.instance.signOut();
+          if (!mounted) return;
           context.go('/login');
         }
       }
@@ -351,7 +352,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                               prefixIcon: Icon(Icons.location_city_outlined),
                             ),
                             isExpanded: true,
-                            value: _selectedCity,
+                            initialValue: _selectedCity,
                             items: _cities.map((city) {
                               return DropdownMenuItem(
                                 value: city,
@@ -370,7 +371,7 @@ class _ClinicRegisterScreenState extends State<ClinicRegisterScreen> {
                               prefixIcon: Icon(Icons.map_outlined),
                             ),
                             isExpanded: true,
-                            value: _selectedDistrict,
+                            initialValue: _selectedDistrict,
                             items: _districts.map((district) {
                               return DropdownMenuItem(
                                 value: district,

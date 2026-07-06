@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../shared/widgets/app_card.dart';
@@ -155,7 +154,7 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                       child: DropdownButtonFormField<String>(
                         decoration: const InputDecoration(labelText: 'Unvan', isDense: true),
                         isExpanded: true,
-                        value: selectedTitle,
+                        initialValue: selectedTitle,
                         items: titles.map((t) => DropdownMenuItem(value: t, child: Text(t, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           setModalState(() {
@@ -169,7 +168,7 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                       child: DropdownButtonFormField<String>(
                         decoration: const InputDecoration(labelText: 'Uzmanlık', isDense: true),
                         isExpanded: true,
-                        value: selectedSpecialty,
+                        initialValue: selectedSpecialty,
                         items: specialties.map((s) => DropdownMenuItem(value: s, child: Text(s, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           setModalState(() {
@@ -254,7 +253,7 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundColor: context.scheme.primary.withOpacity(0.12),
+                  backgroundColor: context.scheme.primary.withValues(alpha: 0.12),
                   backgroundImage: vet['profilePhoto'] != null
                       ? NetworkImage('http://10.0.2.2:5295${vet['profilePhoto']}')
                       : null,
@@ -383,7 +382,7 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 26,
-                                  backgroundColor: primary.withOpacity(0.12),
+                                  backgroundColor: primary.withValues(alpha: 0.12),
                                   backgroundImage: vet['profilePhoto'] != null
                                       ? NetworkImage('http://10.0.2.2:5295${vet['profilePhoto']}')
                                       : null,

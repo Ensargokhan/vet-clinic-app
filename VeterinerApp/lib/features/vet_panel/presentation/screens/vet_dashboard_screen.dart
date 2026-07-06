@@ -73,7 +73,7 @@ class _VetDashboardScreenState extends State<VetDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.12),
+              color: primary.withValues(alpha: 0.12),
               borderRadius: AppRadius.mdAll,
             ),
             child: Icon(Icons.pets, color: primary, size: 20),
@@ -189,7 +189,7 @@ class _VetDashboardScreenState extends State<VetDashboardScreen> {
       children: [
         CircleAvatar(
           radius: 30,
-          backgroundColor: primary.withOpacity(0.12),
+          backgroundColor: primary.withValues(alpha: 0.12),
           backgroundImage: photo != null ? NetworkImage('$_imgBase$photo') : null,
           child: photo == null ? Icon(Icons.person, color: primary, size: 30) : null,
         ),

@@ -123,7 +123,7 @@ class AppTheme {
         color: scheme.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shadowColor: Colors.black.withOpacity(0.06),
+        shadowColor: Colors.black.withValues(alpha: 0.06),
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.lgAll,
           side: BorderSide(color: semantic.outline),
@@ -134,7 +134,7 @@ class AppTheme {
         backgroundColor: scheme.surface,
         elevation: 0,
         height: 68,
-        indicatorColor: scheme.primary.withOpacity(0.14),
+        indicatorColor: scheme.primary.withValues(alpha: 0.14),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
@@ -171,9 +171,9 @@ class AppTheme {
         ),
       ),
 
-      snackBarTheme: SnackBarThemeData(
+      snackBarTheme: const SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
       ),
 
       floatingActionButtonTheme: FloatingActionButtonThemeData(

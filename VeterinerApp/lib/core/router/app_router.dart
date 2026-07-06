@@ -7,7 +7,6 @@ import '../../features/auth/presentation/screens/clinic_register_screen.dart';
 import '../../features/home/presentation/screens/main_screen.dart';
 import '../../features/home/presentation/screens/clinic_main_screen.dart';
 import '../../features/home/presentation/screens/vet_main_screen.dart';
-import '../../features/clinics/presentation/screens/clinics_screen.dart';
 import '../../features/clinics/presentation/screens/clinic_detail_screen.dart';
 import '../../features/animals/presentation/screens/animals_screen.dart';
 import '../../features/animals/presentation/screens/add_animal_screen.dart';

@@ -156,7 +156,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             width: 100,
                             height: 100,
                             decoration: BoxDecoration(
-                              color: primary.withOpacity(0.12),
+                              color: primary.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
                             child: Center(

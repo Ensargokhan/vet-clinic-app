@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
@@ -150,7 +149,7 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
               background: Container(
                 color: primary,
                 child: Icon(Icons.local_hospital,
-                    size: 80, color: context.scheme.onPrimary.withOpacity(0.25)),
+                    size: 80, color: context.scheme.onPrimary.withValues(alpha: 0.25)),
               ),
             ),
           ),
@@ -203,7 +202,7 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
                         children: [
                           CircleAvatar(
                             radius: 24,
-                            backgroundColor: primary.withOpacity(0.12),
+                            backgroundColor: primary.withValues(alpha: 0.12),
                             backgroundImage: vet.profilePhoto != null
                                 ? NetworkImage('$_imgBase${vet.profilePhoto}')
                                 : null,

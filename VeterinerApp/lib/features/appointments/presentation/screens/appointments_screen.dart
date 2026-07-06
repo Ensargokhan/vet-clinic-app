@@ -118,7 +118,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
+              color: statusColor.withValues(alpha: 0.12),
               borderRadius: AppRadius.mdAll,
             ),
             child: Icon(Icons.calendar_today_outlined, color: statusColor, size: 20),

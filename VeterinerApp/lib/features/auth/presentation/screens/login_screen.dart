@@ -58,6 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (e.code == 'wrong-password') message = 'Hatalı şifre';
       if (e.code == 'invalid-credential') message = 'E-posta veya şifre hatalı';
       
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
@@ -71,10 +72,13 @@ class _LoginScreenState extends State<LoginScreen> {
         message = e.response?.data?['message'] ?? 'Hesabınız sistem yöneticisi veya klinik tarafından pasife alınmıştır.';
         await FirebaseAuth.instance.signOut();
       }
+      
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Bilinmeyen bir hata oluştu: $e'), backgroundColor: Colors.red),
       );

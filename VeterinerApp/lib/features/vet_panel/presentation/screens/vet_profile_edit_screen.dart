@@ -156,14 +156,14 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: context.scheme.primary.withOpacity(0.12),
+                      color: context.scheme.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: _profilePhotoUrl != null
                           ? ClipOval(
                               child: Image.network(
-                                'http://10.0.2.2:5295${_profilePhotoUrl}',
+                                'http://10.0.2.2:5295$_profilePhotoUrl',
                                 width: 100,
                                 height: 100,
                                 fit: BoxFit.cover,
@@ -209,7 +209,7 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                     DropdownButtonFormField<String>(
                       decoration: const InputDecoration(labelText: 'Unvan', prefixIcon: Icon(Icons.badge)),
                       isExpanded: true,
-                      value: _selectedTitle,
+                      initialValue: _selectedTitle,
                       items: _titles.map((t) => DropdownMenuItem(value: t, child: Text(t, overflow: TextOverflow.ellipsis))).toList(),
                       onChanged: (val) {
                         if (val != null) setState(() => _selectedTitle = val);
@@ -220,7 +220,7 @@ class _VetProfileEditScreenState extends State<VetProfileEditScreen> {
                       decoration: const InputDecoration(labelText: 'Uzmanlık', prefixIcon: Icon(Icons.medical_services)),
                       isExpanded: true,
                       // Liste API'den gelene kadar değer items içinde olmayabilir; o ana dek null göster
-                      value: _specialties.contains(_selectedSpecialty) ? _selectedSpecialty : null,
+                      initialValue: _specialties.contains(_selectedSpecialty) ? _selectedSpecialty : null,
                       hint: const Text('Uzmanlık seçin'),
                       items: _specialties.map((s) => DropdownMenuItem(value: s, child: Text(s, overflow: TextOverflow.ellipsis))).toList(),
                       onChanged: (val) {

@@ -250,7 +250,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [primary, primary.withOpacity(0.82)],
+          colors: [primary, primary.withValues(alpha: 0.82)],
         ),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppRadius.xl + 12),
@@ -310,14 +310,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
-                    ?.copyWith(color: onPrimary.withOpacity(0.85)),
+                    ?.copyWith(color: onPrimary.withValues(alpha: 0.85)),
               ),
               const SizedBox(height: AppSpacing.sm),
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.md, vertical: AppSpacing.xs + 2),
                 decoration: BoxDecoration(
-                  color: onPrimary.withOpacity(0.2),
+                  color: onPrimary.withValues(alpha: 0.2),
                   borderRadius: AppRadius.pillAll,
                 ),
                 child: Text(

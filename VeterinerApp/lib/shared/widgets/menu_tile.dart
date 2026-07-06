@@ -39,7 +39,7 @@ class MenuTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
+                  color: color.withValues(alpha: 0.12),
                   borderRadius: AppRadius.mdAll,
                 ),
                 child: Icon(icon, color: color, size: 20),

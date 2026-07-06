@@ -98,7 +98,7 @@ class _AnimalsScreenState extends State<AnimalsScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.12),
+              color: primary.withValues(alpha: 0.12),
               borderRadius: AppRadius.mdAll,
             ),
             child: Icon(Icons.pets, color: primary, size: 28),

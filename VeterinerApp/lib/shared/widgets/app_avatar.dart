@@ -21,7 +21,7 @@ class AppAvatar extends StatelessWidget {
     final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: primary.withOpacity(0.12),
+      backgroundColor: primary.withValues(alpha: 0.12),
       backgroundImage: hasImage ? NetworkImage(imageUrl!) : null,
       child: hasImage
           ? null
