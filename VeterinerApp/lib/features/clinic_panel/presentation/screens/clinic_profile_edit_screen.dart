@@ -81,8 +81,19 @@ class _ClinicProfileEditScreenState extends State<ClinicProfileEditScreen> {
       }
     } on DioException catch (e) {
       if (mounted) {
+        String errorMsg = 'Hata oluştu';
+        final data = e.response?.data;
+        if (data is Map<String, dynamic>) {
+          if (data.containsKey('errors')) {
+            final errors = data['errors'] as Map<String, dynamic>;
+            errorMsg = errors.values.first.first.toString();
+          } else if (data.containsKey('message')) {
+            errorMsg = data['message'];
+          }
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.response?.data?['message'] ?? 'Hata oluştu'), backgroundColor: context.scheme.error),
+          SnackBar(content: Text(errorMsg), backgroundColor: context.scheme.error),
         );
       }
     } finally {

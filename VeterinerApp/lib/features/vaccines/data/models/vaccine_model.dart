@@ -6,7 +6,6 @@ class VaccineModel {
   final String vaccineName;
   final DateTime administeredDate;
   final DateTime? nextDueDate;
-  final String? batchNumber;
   final String? notes;
 
   VaccineModel({
@@ -17,7 +16,6 @@ class VaccineModel {
     required this.vaccineName,
     required this.administeredDate,
     this.nextDueDate,
-    this.batchNumber,
     this.notes,
   });
 
@@ -32,7 +30,6 @@ class VaccineModel {
       nextDueDate: json['nextDueDate'] != null
           ? DateTime.parse(json['nextDueDate'])
           : null,
-      batchNumber: json['batchNumber'],
       notes: json['notes'],
     );
   }

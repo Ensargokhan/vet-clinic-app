@@ -183,9 +183,6 @@ class _AnimalVaccinesScreenState extends State<AnimalVaccinesScreen> {
           if (v.nextDueDate != null)
             Text('Sonraki: ${DateFormat('dd.MM.yyyy').format(v.nextDueDate!)}',
                 style: Theme.of(context).textTheme.bodyMedium),
-          if (v.batchNumber != null && v.batchNumber!.isNotEmpty)
-            Text('Parti No: ${v.batchNumber}',
-                style: Theme.of(context).textTheme.labelSmall),
           if (v.notes != null && v.notes!.isNotEmpty)
             Text('Not: ${v.notes}',
                 style: Theme.of(context).textTheme.bodyMedium),

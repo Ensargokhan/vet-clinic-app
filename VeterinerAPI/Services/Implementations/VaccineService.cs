@@ -75,7 +75,6 @@ public class VaccineService : IVaccineService
             VaccineName = v.VaccineName,
             AdministeredDate = v.AdministeredDate,
             NextDueDate = v.NextDueDate,
-            BatchNumber = v.BatchNumber,
             Notes = v.Notes
         });
     }
@@ -130,7 +129,6 @@ public class VaccineService : IVaccineService
             VaccineName = InputSanitizer.Sanitize(request.VaccineName)!,
             AdministeredDate = request.AdministeredDate,
             NextDueDate = request.NextDueDate,
-            BatchNumber = InputSanitizer.Sanitize(request.BatchNumber),
             Notes = InputSanitizer.Sanitize(request.Notes)
         };
 
@@ -165,7 +163,6 @@ public class VaccineService : IVaccineService
         vaccine.VaccineName = InputSanitizer.Sanitize(request.VaccineName)!;
         vaccine.AdministeredDate = request.AdministeredDate;
         vaccine.NextDueDate = request.NextDueDate;
-        vaccine.BatchNumber = InputSanitizer.Sanitize(request.BatchNumber);
         vaccine.Notes = InputSanitizer.Sanitize(request.Notes);
 
         _vaccineRepository.Update(vaccine);

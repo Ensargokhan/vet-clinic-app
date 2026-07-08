@@ -16,9 +16,6 @@ public class VaccineRequest
 
     public DateTime? NextDueDate { get; set; }
 
-    [MaxLength(100, ErrorMessage = "Parti numarası en fazla 100 karakter olabilir.")]
-    public string? BatchNumber { get; set; }
-
     [MaxLength(1000, ErrorMessage = "Notlar en fazla 1000 karakter olabilir.")]
     public string? Notes { get; set; }
 }

@@ -30,7 +30,6 @@ class _AddVaccineScreenState extends State<AddVaccineScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _batchController = TextEditingController();
   final _notesController = TextEditingController();
 
   List<String> _vaccineNames = [];
@@ -50,7 +49,6 @@ class _AddVaccineScreenState extends State<AddVaccineScreen> {
     if (v != null) {
       _administeredDate = v.administeredDate;
       _nextDueDate = v.nextDueDate;
-      _batchController.text = v.batchNumber ?? '';
       _notesController.text = v.notes ?? '';
     }
     _loadVaccineNames();
@@ -59,7 +57,6 @@ class _AddVaccineScreenState extends State<AddVaccineScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _batchController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -128,8 +125,6 @@ class _AddVaccineScreenState extends State<AddVaccineScreen> {
         'nextDueDate': _nextDueDate != null
             ? DateFormat('yyyy-MM-dd').format(_nextDueDate!)
             : null,
-        'batchNumber':
-            _batchController.text.trim().isEmpty ? null : _batchController.text.trim(),
         'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       };
 
@@ -226,14 +221,6 @@ class _AddVaccineScreenState extends State<AddVaccineScreen> {
               onClear: _nextDueDate != null
                   ? () => setState(() => _nextDueDate = null)
                   : null,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            TextFormField(
-              controller: _batchController,
-              decoration: const InputDecoration(
-                labelText: 'Parti No (opsiyonel)',
-                prefixIcon: Icon(Icons.numbers_outlined),
-              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             TextFormField(

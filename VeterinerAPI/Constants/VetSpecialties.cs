@@ -8,19 +8,19 @@ public static class VetSpecialties
 {
     public static readonly string[] All =
     {
-        "Genel Veteriner Hekimliği",
-        "Ortopedi",
-        "Kardiyoloji",
-        "Dermatoloji",
-        "Oftalmoloji",
-        "Nöroloji",
-        "Onkoloji",
-        "Dahiliye",
+        "Büyükbaş Hayvan",
         "Cerrahi",
+        "Dahiliye",
+        "Dermatoloji",
         "Diş Hekimliği",
         "Egzotik Hayvanlar",
-        "Büyükbaş Hayvan",
-        "Küçükbaş Hayvan"
+        "Genel Veteriner Hekimliği",
+        "Kardiyoloji",
+        "Küçükbaş Hayvan",
+        "Nöroloji",
+        "Oftalmoloji",
+        "Onkoloji",
+        "Ortopedi"
     };
 
     public static bool IsValid(string? value) =>

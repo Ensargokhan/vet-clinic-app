@@ -51,6 +51,16 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.go('/home');
+              }
+            },
+          ),
           title: const Text('Randevularım'),
           bottom: TabBar(
             labelColor: context.scheme.primary,

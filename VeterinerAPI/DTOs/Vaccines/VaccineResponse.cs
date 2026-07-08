@@ -9,7 +9,6 @@ public class VaccineResponse
     public string VaccineName { get; set; } = string.Empty;
     public DateTime AdministeredDate { get; set; }
     public DateTime? NextDueDate { get; set; }
-    public string? BatchNumber { get; set; }
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; }
 }

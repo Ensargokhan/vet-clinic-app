@@ -80,9 +80,9 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
     final phoneCtrl = TextEditingController();
     final passwordCtrl = TextEditingController();
     
-    String selectedTitle = 'Veteriner Hekim';
+    String? selectedTitle;
     final List<String> specialties = _specialties;
-    String? selectedSpecialty = specialties.isNotEmpty ? specialties.first : null;
+    String? selectedSpecialty;
 
     final List<String> titles = [
       'Veteriner Hekim',
@@ -158,9 +158,10 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                         items: titles.map((t) => DropdownMenuItem(value: t, child: Text(t, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           setModalState(() {
-                            selectedTitle = val!;
+                            selectedTitle = val;
                           });
                         },
+                        validator: (v) => v == null ? 'Lütfen unvan seçin' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -172,9 +173,10 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                         items: specialties.map((s) => DropdownMenuItem(value: s, child: Text(s, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (val) {
                           setModalState(() {
-                            selectedSpecialty = val!;
+                            selectedSpecialty = val;
                           });
                         },
+                        validator: (v) => v == null ? 'Lütfen uzmanlık seçin' : null,
                       ),
                     ),
                   ],
@@ -191,7 +193,7 @@ class _ClinicVetsScreenState extends State<ClinicVetsScreen> {
                           emailCtrl.text,
                           passwordCtrl.text,
                           phoneCtrl.text,
-                          selectedTitle,
+                          selectedTitle!,
                           selectedSpecialty ?? '',
                         );
                       }
