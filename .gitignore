@@ -55,6 +55,11 @@ build/
 VeterinerAPI/wwwroot/uploads/
 *.csv
 
+# Rapor / ofis dosyaları (binary, repoyu şişirir)
+*.docx
+*.doc
+*.pdf
+
 # Yerel çalışma notları / rapor taslakları (repoda tutulmuyor, diskte kalır)
 # NOT: CLAUDE.md ve Flutter'ın README.md dosyaları takip edilmeye devam eder.
 AI_ENTEGRASYON_DIGER_CIHAZ.md
