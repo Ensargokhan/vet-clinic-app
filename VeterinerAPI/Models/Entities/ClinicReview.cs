@@ -26,6 +26,10 @@ public class ClinicReview
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // Yorum düzenlendiğinde AppDbContext.UpdateTimestamps() tarafından otomatik set edilir.
+    [Column("updated_at")]
+    public DateTime? UpdatedAt { get; set; }
+
     [Column("is_visible")]
     public bool IsVisible { get; set; } = true;
 

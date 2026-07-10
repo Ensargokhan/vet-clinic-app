@@ -16,5 +16,9 @@ public class ClinicDetailResponse
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
 
+    /// <summary>Ortalama puan; hiç değerlendirme yoksa null.</summary>
+    public double? Rating { get; set; }
+    public int ReviewCount { get; set; }
+
     public List<VetResponse>? Vets { get; set; }
 }

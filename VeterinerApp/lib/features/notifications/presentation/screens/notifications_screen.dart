@@ -89,6 +89,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.chat_bubble_outline;
       case 'clinic_announcement':
         return Icons.campaign_outlined;
+      case 'new_review':
+        return Icons.star_outline;
       default:
         return Icons.notifications_outlined;
     }

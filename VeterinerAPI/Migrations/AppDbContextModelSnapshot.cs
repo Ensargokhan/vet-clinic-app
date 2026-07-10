@@ -460,6 +460,10 @@ namespace VeterinerAPI.Migrations
                         .HasColumnType("tinyint unsigned")
                         .HasColumnName("rating");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int")
                         .HasColumnName("user_id");
@@ -469,6 +473,9 @@ namespace VeterinerAPI.Migrations
                     b.HasIndex("ClinicId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("ClinicId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("clinic_reviews");
                 });

@@ -21,6 +21,7 @@ public class ClinicRepository : Repository<Clinic>, IClinicRepository
         var clinic = await _dbSet
             .Include(c => c.Vets)
                 .ThenInclude(v => v.User)
+            .Include(c => c.Reviews) // klinik detayında ortalama puan/adet için
             .FirstOrDefaultAsync(c => c.Id == clinicId && c.IsActive);
 
         // Do not mutate tracked lists! Let the caller filter active vets if needed.

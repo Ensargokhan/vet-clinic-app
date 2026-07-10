@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_state.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import '../../../reviews/presentation/widgets/write_review_sheet.dart';
 import '../../data/models/appointment_model.dart';
 
 class AppointmentsScreen extends StatefulWidget {
@@ -115,42 +116,73 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
+  Future<void> _reviewClinic(AppointmentModel appt) async {
+    final saved = await WriteReviewSheet.show(
+      context,
+      clinicId: appt.clinicId,
+      clinicName: appt.clinicName ?? 'Klinik',
+    );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Değerlendirmeniz için teşekkürler!'),
+          backgroundColor: context.colors.success,
+        ),
+      );
+    }
+  }
+
   Widget _appointmentCard(AppointmentModel appt) {
     final date = DateFormat('dd MMM yyyy, HH:mm', 'tr_TR').format(appt.appointmentDate);
     final statusColor = AppointmentStatus.color(context, appt.status);
 
     return AppCard(
       onTap: () => context.push('/appointments/${appt.id}'),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.12),
-              borderRadius: AppRadius.mdAll,
-            ),
-            child: Icon(Icons.calendar_today_outlined, color: statusColor, size: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  borderRadius: AppRadius.mdAll,
+                ),
+                child: Icon(Icons.calendar_today_outlined, color: statusColor, size: 20),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(date, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.sm),
+                    if (appt.animalName != null)
+                      _metaRow(Icons.pets, appt.animalName!),
+                    if (appt.vetName != null)
+                      _metaRow(Icons.medical_services_outlined, appt.vetName!),
+                    if (appt.reason != null && appt.reason!.isNotEmpty)
+                      _metaRow(Icons.notes_outlined, appt.reason!),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              StatusBadge(appt.status),
+            ],
           ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(date, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: AppSpacing.sm),
-                if (appt.animalName != null)
-                  _metaRow(Icons.pets, appt.animalName!),
-                if (appt.vetName != null)
-                  _metaRow(Icons.medical_services_outlined, appt.vetName!),
-                if (appt.reason != null && appt.reason!.isNotEmpty)
-                  _metaRow(Icons.notes_outlined, appt.reason!),
-              ],
+          // Tamamlanan randevudan sonra kliniği değerlendirme daveti
+          if (appt.canReviewClinic)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _reviewClinic(appt),
+                icon: const Icon(Icons.rate_review_outlined, size: 18),
+                label: const Text('Değerlendir'),
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          StatusBadge(appt.status),
         ],
       ),
     );

@@ -140,11 +140,15 @@ class FcmService {
     );
   }
 
-  /// Bildirim tipine göre yönlendirme. Yeni mesajda ilgili sohbete, aksi halde
-  /// bildirim merkezine gider.
+  /// Bildirim tipine göre yönlendirme. Yeni mesajda ilgili sohbete, yeni
+  /// değerlendirmede kliniğin yorumlarına, aksi halde bildirim merkezine gider.
   void _navigate(String type, String relatedId) {
     if (type == 'new_message' && relatedId.isNotEmpty) {
       AppRouter.router.push('/messages/$relatedId');
+      return;
+    }
+    if (type == 'new_review' && relatedId.isNotEmpty) {
+      AppRouter.router.push('/clinics/$relatedId/reviews');
       return;
     }
     AppRouter.router.push('/notifications');

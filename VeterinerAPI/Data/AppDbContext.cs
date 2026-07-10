@@ -152,6 +152,12 @@ public class AppDbContext : DbContext
                   .WithMany(u => u.ClinicReviews)
                   .HasForeignKey(cr => cr.UserId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            // Bir kullanıcı bir kliniğe yalnızca tek yorum yazabilir (düzenlenebilir).
+            entity.HasIndex(cr => new { cr.ClinicId, cr.UserId }).IsUnique();
+
+            // Kliniğin yorumlarını tarih sırasıyla listelemek için
+            entity.HasIndex(cr => cr.ClinicId);
         });
 
         // ===== CONVERSATION =====

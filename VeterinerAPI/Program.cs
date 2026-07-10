@@ -37,6 +37,7 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IAnnouncementRepository, AnnouncementRepository>();
+builder.Services.AddScoped<IClinicReviewRepository, ClinicReviewRepository>();
 builder.Services.AddScoped<IAiChatSessionRepository, AiChatSessionRepository>();
 builder.Services.AddScoped<IAiChatMessageRepository, AiChatMessageRepository>();
 builder.Services.AddScoped<IAiReportRepository, AiReportRepository>();
@@ -52,6 +53,7 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
+builder.Services.AddScoped<IClinicReviewService, ClinicReviewService>();
 builder.Services.AddScoped<IAiAssistantService, AiAssistantService>();
 
 // AI (Gemini) — yapılandırma + REST istemcisi (HttpClient)

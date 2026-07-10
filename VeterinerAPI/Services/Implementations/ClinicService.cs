@@ -75,10 +75,8 @@ public class ClinicService : IClinicService
                     .Select(v => v.Specialty!)
                     .Distinct()
                     .ToList(),
-                ReviewCount = c.Reviews.Count(r => r.IsVisible),
-                Rating = c.Reviews.Any(r => r.IsVisible)
-                    ? Math.Round(c.Reviews.Where(r => r.IsVisible).Average(r => r.Rating), 1)
-                    : (double?)null
+                ReviewCount = Aggregate(c.Reviews).count,
+                Rating = Aggregate(c.Reviews).rating
             }).ToList(),
             Page = request.Page,
             PageSize = request.PageSize,
@@ -89,13 +87,28 @@ public class ClinicService : IClinicService
         };
     }
 
+    /// <summary>
+    /// Görünür değerlendirmelerden ortalama puan ve adet. Hiç yorum yoksa rating null döner.
+    /// Klinik listesi ve klinik detayı bu tek kaynağı kullanır.
+    /// </summary>
+    private static (double? rating, int count) Aggregate(IEnumerable<ClinicReview> reviews)
+    {
+        var visible = reviews.Where(r => r.IsVisible).ToList();
+        if (visible.Count == 0) return (null, 0);
+        return (Math.Round(visible.Average(r => (double)r.Rating), 1), visible.Count);
+    }
+
     public async Task<ClinicDetailResponse?> GetClinicDetailsAsync(int clinicId)
     {
         var clinic = await _clinicRepository.GetClinicWithVetsAsync(clinicId);
         if (clinic == null) return null;
 
+        var (rating, reviewCount) = Aggregate(clinic.Reviews);
+
         return new ClinicDetailResponse
         {
+            Rating = rating,
+            ReviewCount = reviewCount,
             Id = clinic.Id,
             Name = clinic.Name,
             Address = clinic.Address,

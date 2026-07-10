@@ -10,6 +10,11 @@ import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/info_row.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../announcements/data/models/announcement_model.dart';
+import '../../../reviews/data/models/clinic_review_model.dart';
+import '../../../reviews/data/models/review_summary_model.dart';
+import '../../../reviews/presentation/widgets/rating_summary.dart';
+import '../../../reviews/presentation/widgets/review_tile.dart';
+import '../../../reviews/presentation/widgets/star_rating.dart';
 import '../../data/models/clinic_model.dart';
 
 const String _imgBase = 'http://10.0.2.2:5295';
@@ -29,11 +34,40 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
 
   List<AnnouncementModel> _announcements = [];
 
+  // Değerlendirmeler: özet + ilk birkaç yorum (tamamı ayrı ekranda)
+  ReviewSummaryModel _reviewSummary = ReviewSummaryModel.empty();
+  List<ClinicReviewModel> _topReviews = [];
+
   @override
   void initState() {
     super.initState();
     _fetchClinicDetails();
     _fetchAnnouncements();
+    _fetchReviews();
+  }
+
+  Future<void> _fetchReviews() async {
+    try {
+      final dio = DioClient().dio;
+      final results = await Future.wait([
+        dio.get('/clinics/${widget.clinicId}/reviews/summary'),
+        dio.get('/clinics/${widget.clinicId}/reviews',
+            queryParameters: {'page': 1, 'pageSize': 3}),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        if (results[0].data['success'] == true) {
+          _reviewSummary = ReviewSummaryModel.fromJson(results[0].data['data']);
+        }
+        if (results[1].data['success'] == true) {
+          final List<dynamic> items = results[1].data['data']['items'] ?? [];
+          _topReviews = items.map((e) => ClinicReviewModel.fromJson(e)).toList();
+        }
+      });
+    } catch (_) {
+      // değerlendirme yüklenemezse sessiz geç (bölüm boş kalır)
+    }
   }
 
   Future<void> _fetchAnnouncements() async {
@@ -117,6 +151,40 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
     );
   }
 
+  Widget _buildReviews() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: AppSpacing.xl),
+        Row(
+          children: [
+            Expanded(
+              child: Text('Değerlendirmeler',
+                  style: Theme.of(context).textTheme.titleLarge),
+            ),
+            if (_reviewSummary.hasReviews)
+              TextButton(
+                onPressed: () => context.push(
+                  '/clinics/${widget.clinicId}/reviews',
+                  extra: {'clinicName': _clinic?.name},
+                ),
+                child: Text('Tümünü Gör (${_reviewSummary.reviewCount})'),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        AppCard(child: RatingSummary(summary: _reviewSummary, compact: true)),
+        if (_topReviews.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          for (final r in _topReviews) ...[
+            ReviewTile(review: r),
+            const SizedBox(height: AppSpacing.md),
+          ],
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -162,6 +230,19 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
                   AppCard(
                     child: Column(
                       children: [
+                        if (clinic.rating != null) ...[
+                          Row(
+                            children: [
+                              StarRating(rating: clinic.rating!, size: 18),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                '${clinic.rating!.toStringAsFixed(1)} · ${clinic.reviewCount} değerlendirme',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                        ],
                         InfoRow(
                           icon: Icons.location_on_outlined,
                           label: 'Adres',
@@ -181,6 +262,7 @@ class _ClinicDetailScreenState extends State<ClinicDetailScreen> {
                   Text(clinic.description ?? 'Açıklama yok.',
                       style: Theme.of(context).textTheme.bodyLarge),
                   _buildAnnouncements(),
+                  _buildReviews(),
                   const SizedBox(height: AppSpacing.xl),
                   Text('Veteriner Hekimlerimiz',
                       style: Theme.of(context).textTheme.titleLarge),

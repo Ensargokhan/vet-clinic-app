@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_state.dart';
 import '../../../../shared/widgets/info_row.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
+import '../../../reviews/presentation/widgets/write_review_sheet.dart';
 
 class AppointmentDetailScreen extends StatefulWidget {
   final int appointmentId;
@@ -94,6 +95,22 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     }
   }
 
+  Future<void> _reviewClinic(int clinicId, String clinicName) async {
+    final saved = await WriteReviewSheet.show(
+      context,
+      clinicId: clinicId,
+      clinicName: clinicName,
+    );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Değerlendirmeniz için teşekkürler!'),
+          backgroundColor: context.colors.success,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,6 +132,10 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     // Sahip, bekleyen veya onaylanmış randevuyu iptal edebilir (tamamlanan hariç).
     final canCancel = status == 'pending' || status == 'confirmed';
     final statusColor = AppointmentStatus.color(context, status);
+
+    // Tamamlanan randevudan sonra klinik değerlendirilebilir
+    final clinicId = appt['clinicId'] as int?;
+    final canReview = status == 'completed' && clinicId != null && clinicId != 0;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -183,6 +204,21 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
               ],
             ),
           ),
+
+          if (canReview) ...[
+            const SizedBox(height: AppSpacing.xl),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => _reviewClinic(
+                  clinicId,
+                  appt['clinicName']?.toString() ?? 'Klinik',
+                ),
+                icon: const Icon(Icons.rate_review_outlined),
+                label: const Text('Kliniği Değerlendir'),
+              ),
+            ),
+          ],
 
           if (canCancel) ...[
             const SizedBox(height: AppSpacing.xl),

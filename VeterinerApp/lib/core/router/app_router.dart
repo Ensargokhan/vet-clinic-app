@@ -23,6 +23,7 @@ import '../../features/vaccines/data/models/vaccine_model.dart';
 import '../../features/messaging/presentation/screens/messages_list_screen.dart';
 import '../../features/messaging/presentation/screens/chat_thread_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_chat_screen.dart';
+import '../../features/reviews/presentation/screens/clinic_reviews_screen.dart';
 import '../../features/clinic_panel/presentation/screens/clinic_profile_edit_screen.dart';
 import '../../features/clinic_panel/presentation/screens/clinic_announcements_screen.dart';
 import '../../features/vet_panel/presentation/screens/vet_profile_edit_screen.dart';
@@ -64,6 +65,17 @@ class AppRouter {
         builder: (context, state) {
           final id = int.parse(state.pathParameters['id']!);
           return ClinicDetailScreen(clinicId: id);
+        },
+      ),
+      GoRoute(
+        path: '/clinics/:id/reviews',
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          final extra = state.extra as Map<String, dynamic>?;
+          return ClinicReviewsScreen(
+            clinicId: id,
+            clinicName: extra?['clinicName'],
+          );
         },
       ),
       GoRoute(
