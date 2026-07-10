@@ -54,3 +54,13 @@ build/
 # Uploaded Files
 VeterinerAPI/wwwroot/uploads/
 *.csv
+
+# Yerel çalışma notları / rapor taslakları (repoda tutulmuyor, diskte kalır)
+# NOT: CLAUDE.md ve Flutter'ın README.md dosyaları takip edilmeye devam eder.
+AI_ENTEGRASYON_DIGER_CIHAZ.md
+DEGERLENDIRME_MODULU_DIGER_CIHAZ.md
+DEPLOY_CHECKLIST.md
+RAPOR_GUNCELLEME.md
+ai-on-teshis-rehberi.md
+rapor.md
+test.md
