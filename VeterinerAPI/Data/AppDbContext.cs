@@ -103,6 +103,11 @@ public class AppDbContext : DbContext
             entity.HasIndex(a => a.OwnerId);
             entity.HasIndex(a => a.VetId);
             entity.HasIndex(a => a.AppointmentDate);
+
+            // İyimser eşzamanlılık: hekim ve klinik yöneticisi aynı randevuyu aynı anda
+            // güncellerse (ör. biri 'completed' öteki 'no_show'), ikinci yazan
+            // DbUpdateConcurrencyException alır — "son yazan kazanır" yarışı kapanır.
+            entity.Property(a => a.Status).IsConcurrencyToken();
         });
 
         // ===== VET SCHEDULE =====

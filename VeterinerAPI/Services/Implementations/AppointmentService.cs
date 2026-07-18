@@ -43,7 +43,8 @@ public class AppointmentService : IAppointmentService
             DurationMinutes = a.DurationMinutes,
             Status = a.Status,
             Reason = a.Reason,
-            Notes = a.Notes
+            Notes = a.Notes,
+            CancellationReason = a.CancellationReason
         });
     }
 
@@ -64,7 +65,8 @@ public class AppointmentService : IAppointmentService
             DurationMinutes = a.DurationMinutes,
             Status = a.Status,
             Reason = a.Reason,
-            Notes = a.Notes
+            Notes = a.Notes,
+            CancellationReason = a.CancellationReason
         };
     }
 
@@ -132,7 +134,7 @@ public class AppointmentService : IAppointmentService
         return appointment.Id;
     }
 
-    public async Task<bool> CancelAppointmentAsync(int id, int userId)
+    public async Task<bool> CancelAppointmentAsync(int id, int userId, string? reason)
     {
         var appointment = await _appointmentRepository.GetByIdAsync(id);
         if (appointment == null || appointment.OwnerId != userId)
@@ -140,24 +142,33 @@ public class AppointmentService : IAppointmentService
             return false;
         }
 
-        if (appointment.Status == "completed")
-        {
-            throw new Exception("Tamamlanmış randevular iptal edilemez.");
-        }
+        // Merkezi kural: yalnız pending/confirmed iptal edilebilir ve randevuya
+        // 2 saatten fazla süre kalmış olmalı (AppointmentStatusRules tek kaynak).
+        AppointmentStatusRules.EnsureOwnerCancellable(
+            appointment.Status, appointment.AppointmentDate, DateTime.UtcNow);
 
+        var sanitizedReason = InputSanitizer.Sanitize(reason);
         appointment.Status = "cancelled";
+        appointment.CancellationReason =
+            string.IsNullOrWhiteSpace(sanitizedReason) ? null : sanitizedReason;
         _appointmentRepository.Update(appointment);
         await _appointmentRepository.SaveChangesAsync();
 
-        // Hekime "randevu iptal edildi" bildirimi
+        // Hekime "randevu iptal edildi" bildirimi (gerekçe varsa eklenir)
         var vet = await _vetRepository.GetByIdAsync(appointment.VetId);
         if (vet != null)
         {
             var dateStr = appointment.AppointmentDate.ToString("dd.MM.yyyy HH:mm");
+            var body = $"{dateStr} tarihli bir randevu hasta sahibi tarafından iptal edildi.";
+            if (appointment.CancellationReason != null)
+            {
+                body += $" Gerekçe: {appointment.CancellationReason}";
+            }
+
             await _notificationService.NotifyAsync(
                 vet.UserId,
                 "Randevu iptal edildi",
-                $"{dateStr} tarihli bir randevu hasta sahibi tarafından iptal edildi.",
+                body,
                 "appointment_status",
                 appointment.Id);
         }

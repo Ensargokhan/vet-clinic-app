@@ -40,9 +40,19 @@ public class Appointment
     [Column("notes")]
     public string? Notes { get; set; } // hekim notları
 
+    // Hasta sahibinin iptal gerekçesi (hekim notlarıyla karışmasın diye ayrı alan)
+    [MaxLength(500)]
+    [Column("cancellation_reason")]
+    public string? CancellationReason { get; set; }
+
     // Randevu hatırlatması gönderildi mi? (AppointmentReminderWorker tekrar göndermesin)
     [Column("reminder_sent")]
     public bool ReminderSent { get; set; } = false;
+
+    // Saati geçen 'confirmed' randevu için hekime "sonucu işaretle" hatırlatması gönderildi mi?
+    // (AppointmentStatusWorker tekrar göndermesin — ReminderSent ile aynı desen)
+    [Column("completion_reminder_sent")]
+    public bool CompletionReminderSent { get; set; } = false;
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

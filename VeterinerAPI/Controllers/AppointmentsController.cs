@@ -71,12 +71,12 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpPut("{id}/cancel")]
-    public async Task<IActionResult> CancelAppointment(int id)
+    public async Task<IActionResult> CancelAppointment(int id, [FromBody] CancelAppointmentRequest? request)
     {
         if (!HttpContext.Items.TryGetValue("UserId", out var uidObj)) return Unauthorized();
         int userId = (int)uidObj!;
 
-        var success = await _appointmentService.CancelAppointmentAsync(id, userId);
+        var success = await _appointmentService.CancelAppointmentAsync(id, userId, request?.Reason);
         if (!success)
             return NotFound(new ApiResponse<object> { Success = false, Message = "Randevu bulunamadı veya yetkisiz işlem." });
 

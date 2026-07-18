@@ -7,6 +7,7 @@ class AppointmentModel {
   final DateTime appointmentDate;
   final String status;
   final String? notes;
+  final String? cancellationReason;
 
   // Extra display fields
   final String? animalName;
@@ -22,6 +23,7 @@ class AppointmentModel {
     required this.appointmentDate,
     required this.status,
     this.notes,
+    this.cancellationReason,
     this.animalName,
     this.vetName,
     this.clinicName,
@@ -40,6 +42,7 @@ class AppointmentModel {
       appointmentDate: DateTime.parse(json['appointmentDate']),
       status: json['status'] ?? 'pending',
       notes: json['notes'],
+      cancellationReason: json['cancellationReason'],
       animalName: json['animalName'], // Eager loading ile backend'den gelebilir
       vetName: json['vetName'],
       clinicName: json['clinicName'],

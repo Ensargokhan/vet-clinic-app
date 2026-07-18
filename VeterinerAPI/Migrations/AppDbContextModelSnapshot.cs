@@ -289,9 +289,18 @@ namespace VeterinerAPI.Migrations
                         .HasColumnType("datetime(6)")
                         .HasColumnName("appointment_date");
 
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("cancellation_reason");
+
                     b.Property<int>("ClinicId")
                         .HasColumnType("int")
                         .HasColumnName("clinic_id");
+
+                    b.Property<bool>("CompletionReminderSent")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("completion_reminder_sent");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)")
@@ -318,6 +327,7 @@ namespace VeterinerAPI.Migrations
                         .HasColumnName("reminder_sent");
 
                     b.Property<string>("Status")
+                        .IsConcurrencyToken()
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")

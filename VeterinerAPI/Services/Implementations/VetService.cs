@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using VeterinerAPI.DTOs.Vets;
 using VeterinerAPI.Helpers;
 using VeterinerAPI.Repositories.Interfaces;
@@ -149,7 +150,8 @@ public class VetService : IVetService
             DurationMinutes = a.DurationMinutes,
             Status = a.Status,
             Reason = a.Reason,
-            Notes = a.Notes
+            Notes = a.Notes,
+            CancellationReason = a.CancellationReason
         });
     }
 
@@ -167,9 +169,19 @@ public class VetService : IVetService
         if (notes != null) appointment.Notes = InputSanitizer.Sanitize(notes);
 
         _appointmentRepository.Update(appointment);
-        await _appointmentRepository.SaveChangesAsync();
+        try
+        {
+            await _appointmentRepository.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Status bir eşzamanlılık token'ı: aynı anda hekim ve klinik yöneticisi
+            // güncellediyse ikinci yazan buraya düşer — "son yazan kazanır" engellenir.
+            throw new InvalidOperationException(
+                "Randevu az önce başka bir kullanıcı tarafından güncellendi. Lütfen sayfayı yenileyip tekrar deneyin.");
+        }
 
-        // Randevu sahibine durum bildirimi
+        // Randevu sahibine durum bildirimi (yalnız başarılı kayıttan sonra — çift bildirim olmaz)
         await NotifyOwnerStatusAsync(appointment, newStatus);
         return true;
     }

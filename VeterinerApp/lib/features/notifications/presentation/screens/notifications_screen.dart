@@ -91,6 +91,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.campaign_outlined;
       case 'new_review':
         return Icons.star_outline;
+      case 'appointment_action_required':
+        return Icons.pending_actions_outlined;
       default:
         return Icons.notifications_outlined;
     }

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using VeterinerAPI.DTOs.Clinics;
 using VeterinerAPI.Repositories.Interfaces;
 using VeterinerAPI.Services.Interfaces;
@@ -365,7 +366,8 @@ public class ClinicService : IClinicService
             VetName = a.Vet.User.FullName,
             AppointmentDate = a.AppointmentDate,
             Status = a.Status,
-            Reason = a.Reason
+            Reason = a.Reason,
+            CancellationReason = a.CancellationReason
         });
     }
 
@@ -383,9 +385,19 @@ public class ClinicService : IClinicService
         if (notes != null) appointment.Notes = InputSanitizer.Sanitize(notes);
 
         _appointmentRepository.Update(appointment);
-        await _appointmentRepository.SaveChangesAsync();
+        try
+        {
+            await _appointmentRepository.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Status bir eşzamanlılık token'ı: aynı anda hekim ve klinik yöneticisi
+            // güncellediyse ikinci yazan buraya düşer — "son yazan kazanır" engellenir.
+            throw new InvalidOperationException(
+                "Randevu az önce başka bir kullanıcı tarafından güncellendi. Lütfen sayfayı yenileyip tekrar deneyin.");
+        }
 
-        // Randevu sahibine durum bildirimi
+        // Randevu sahibine durum bildirimi (yalnız başarılı kayıttan sonra — çift bildirim olmaz)
         var label = AppointmentStatusRules.ToTurkishLabel(newStatus);
         var dateStr = appointment.AppointmentDate.ToString("dd.MM.yyyy HH:mm");
         await _notificationService.NotifyAsync(

@@ -151,6 +151,9 @@ class FcmService {
       AppRouter.router.push('/clinics/$relatedId/reviews');
       return;
     }
+    // 'appointment_action_required' (hekime "sonucu işaretle" hatırlatması) dahil
+    // diğer tüm tipler bildirim merkezine düşer — hekim paneli tab-bazlı olduğu
+    // için randevuya özel bir derin bağlantı rotası yok.
     AppRouter.router.push('/notifications');
   }
 }

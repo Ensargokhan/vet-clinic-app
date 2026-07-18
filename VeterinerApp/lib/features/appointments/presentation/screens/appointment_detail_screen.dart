@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -53,11 +54,28 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
   }
 
   Future<void> _cancelAppointment() async {
+    final reasonController = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Randevuyu İptal Et'),
-        content: const Text('Bu randevuyu iptal etmek istediğinize emin misiniz?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Bu randevuyu iptal etmek istediğinize emin misiniz?'),
+            const SizedBox(height: AppSpacing.lg),
+            TextField(
+              controller: reasonController,
+              maxLength: 500,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'İptal gerekçesi (isteğe bağlı)',
+                hintText: 'Örn: Programım değişti',
+              ),
+            ),
+          ],
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Vazgeç')),
           FilledButton(
@@ -70,10 +88,14 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     );
 
     if (confirm != true) return;
+    final reason = reasonController.text.trim();
 
     try {
       final dio = DioClient().dio;
-      await dio.put('/appointments/${widget.appointmentId}/cancel');
+      await dio.put(
+        '/appointments/${widget.appointmentId}/cancel',
+        data: {'reason': reason.isEmpty ? null : reason},
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -85,9 +107,17 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Backend mesajını göster (örn. "2 saatten az kaldığı için iptal edilemez")
+        String message = 'İptal işlemi başarısız.';
+        if (e is DioException) {
+          final backendMessage = e.response?.data?['message'];
+          if (backendMessage is String && backendMessage.isNotEmpty) {
+            message = backendMessage;
+          }
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('İptal işlemi başarısız.'),
+            content: Text(message),
             backgroundColor: context.scheme.error,
           ),
         );
@@ -129,8 +159,12 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
     final appt = _appointment!;
     final date = DateTime.parse(appt['appointmentDate']);
     final status = appt['status']?.toString() ?? 'pending';
-    // Sahip, bekleyen veya onaylanmış randevuyu iptal edebilir (tamamlanan hariç).
-    final canCancel = status == 'pending' || status == 'confirmed';
+    // Sahip, bekleyen veya onaylanmış randevuyu iptal edebilir; randevuya 2 saatten
+    // az kaldıysa iptal kapanır (backend nihai hakem, UI kolaylık sağlar).
+    final isCancellableStatus = status == 'pending' || status == 'confirmed';
+    final withinCutoff =
+        date.difference(DateTime.now()) <= const Duration(hours: 2);
+    final canCancel = isCancellableStatus && !withinCutoff;
     final statusColor = AppointmentStatus.color(context, status);
 
     // Tamamlanan randevudan sonra klinik değerlendirilebilir
@@ -201,6 +235,13 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                     label: 'Notlar',
                     value: appt['notes'].toString(),
                   ),
+                if (appt['cancellationReason'] != null &&
+                    appt['cancellationReason'].toString().isNotEmpty)
+                  InfoRow(
+                    icon: Icons.cancel_outlined,
+                    label: 'İptal Gerekçesi',
+                    value: appt['cancellationReason'].toString(),
+                  ),
               ],
             ),
           ),
@@ -233,6 +274,26 @@ class _AppointmentDetailScreenState extends State<AppointmentDetailScreen> {
                   side: BorderSide(color: context.scheme.error),
                 ),
               ),
+            ),
+          ] else if (isCancellableStatus && withinCutoff) ...[
+            // Butonu sessizce gizlemek yerine nedenini açıkla
+            const SizedBox(height: AppSpacing.xl),
+            Row(
+              children: [
+                Icon(Icons.info_outline,
+                    size: 18, color: context.colors.textSecondary),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Randevuya 2 saatten az kaldığı için iptal edilemez. '
+                    'Lütfen kliniği arayınız.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: context.colors.textSecondary),
+                  ),
+                ),
+              ],
             ),
           ],
         ],

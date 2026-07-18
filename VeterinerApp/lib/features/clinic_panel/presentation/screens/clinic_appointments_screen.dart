@@ -265,6 +265,14 @@ class _ClinicAppointmentsScreenState extends State<ClinicAppointmentsScreen>
           _metaRow(Icons.person_outline, 'Sahibi: ${appt['ownerName']}'),
           const SizedBox(height: AppSpacing.sm),
           _metaRow(Icons.medical_services_outlined, 'Hekim: ${appt['vetName']}'),
+          // Hasta sahibi iptal ettiyse gerekçesini göster
+          if (appt['status'] == 'cancelled' &&
+              appt['cancellationReason'] != null &&
+              appt['cancellationReason'].toString().isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _metaRow(Icons.cancel_outlined,
+                'İptal gerekçesi: ${appt['cancellationReason']}'),
+          ],
           const SizedBox(height: AppSpacing.md),
           Container(
             padding: const EdgeInsets.all(AppSpacing.md),

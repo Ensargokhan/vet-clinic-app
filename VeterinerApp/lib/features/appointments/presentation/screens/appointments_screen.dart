@@ -81,14 +81,17 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   Widget _buildBody() {
     if (_isLoading) return const LoadingIndicator();
 
-    final upcoming = _appointments
-        .where((a) => a.status == 'pending' || a.status == 'confirmed')
-        .toList()
+    // "Yaklaşanlar": statüsü aktif (pending/confirmed) VE tarihi geçmemiş olanlar.
+    // Tarihi geçen her randevu, statüsü ne olursa olsun "Geçmiş"e düşer.
+    final now = DateTime.now();
+    bool isUpcoming(AppointmentModel a) =>
+        (a.status == 'pending' || a.status == 'confirmed') &&
+        a.appointmentDate.isAfter(now);
+
+    final upcoming = _appointments.where(isUpcoming).toList()
       ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
 
-    final past = _appointments
-        .where((a) => a.status != 'pending' && a.status != 'confirmed')
-        .toList()
+    final past = _appointments.where((a) => !isUpcoming(a)).toList()
       ..sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
 
     return TabBarView(

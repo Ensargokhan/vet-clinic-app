@@ -14,6 +14,12 @@ public static class AppointmentStatusRules
     public const string NoShow = "no_show";
     public const string Expired = "expired";
 
+    /// <summary>
+    /// Hasta sahibi, randevu saatine bu süreden az kaldığında artık iptal edemez
+    /// (hekimin programını korumak için). Tek kaynak: hem servis kuralı hem hata mesajı bunu kullanır.
+    /// </summary>
+    public static readonly TimeSpan OwnerCancellationCutoff = TimeSpan.FromHours(2);
+
     // Personel (hekim/klinik) tarafından bir durumdan geçilebilecek hedef durumlar.
     // Terminal durumlar (completed, cancelled, no_show, expired) listede yoktur → geçiş kapalı.
     private static readonly IReadOnlyDictionary<string, string[]> StaffTransitions =
@@ -63,6 +69,28 @@ public static class AppointmentStatusRules
 
         throw new InvalidOperationException(
             $"Randevu '{fromLabel}' durumundan '{toLabel}' durumuna geçirilemez.");
+    }
+
+    /// <summary>
+    /// Hasta sahibinin randevu iptali için tek kaynak kural: yalnız 'pending'/'confirmed'
+    /// iptal edilebilir (merkezi geçiş tablosuyla aynı) ve randevu saatine
+    /// OwnerCancellationCutoff'tan fazla süre kalmış olmalıdır.
+    /// Kural ihlalinde InvalidOperationException fırlatır (→ 400).
+    /// </summary>
+    public static void EnsureOwnerCancellable(string status, DateTime appointmentDate, DateTime now)
+    {
+        if (!CanTransition(status, Cancelled))
+        {
+            if (string.Equals(status, Cancelled, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Bu randevu zaten iptal edilmiş.");
+
+            throw new InvalidOperationException(
+                $"'{ToTurkish(status)}' durumundaki bir randevu iptal edilemez.");
+        }
+
+        if (appointmentDate <= now + OwnerCancellationCutoff)
+            throw new InvalidOperationException(
+                $"Randevu saatine {(int)OwnerCancellationCutoff.TotalHours} saatten az kaldığı için iptal edilemez. Lütfen kliniği arayınız.");
     }
 
     /// <summary>Durumun kullanıcıya gösterilecek Türkçe etiketi.</summary>

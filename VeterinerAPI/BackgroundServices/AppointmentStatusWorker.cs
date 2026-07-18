@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using VeterinerAPI.Data;
+using VeterinerAPI.Services.Interfaces;
 
 namespace VeterinerAPI.BackgroundServices;
 
@@ -45,10 +46,36 @@ public class AppointmentStatusWorker : BackgroundService
                     _logger.LogInformation($"{expiredAppointments.Count} adet saati geçmiş randevu 'expired' (Süresi Doldu) olarak işaretlendi.");
                 }
 
-                // TODO: İleride SMS veya Push Notification servisi eklendiğinde
-                // "Yaklaşan (24 saatten az kalmış) ve 'confirmed' olan randevuları bulup bildirim at" 
-                // mantığı buraya eklenebilir.
-                // Örn: var upcoming = dbContext.Appointments.Where(a => a.Status == "confirmed" && a.AppointmentDate > now && a.AppointmentDate <= now.AddHours(24)).ToList();
+                // Saati geçmiş ama hâlâ 'confirmed' randevular: sonucu (Tamamlandı/Gelmedi)
+                // işaretlemesi için hekime tek seferlik hatırlatma gönder.
+                // Otomatik no_show YAPILMAZ — karar insanda kalır (CompletionReminderSent tekrar önler).
+                var awaitingOutcome = await dbContext.Appointments
+                    .Include(a => a.Vet)
+                    .Where(a => a.Status == "confirmed"
+                                && a.AppointmentDate < now
+                                && !a.CompletionReminderSent)
+                    .ToListAsync(stoppingToken);
+
+                if (awaitingOutcome.Any())
+                {
+                    var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+                    foreach (var appointment in awaitingOutcome)
+                    {
+                        var dateStr = appointment.AppointmentDate.ToString("dd.MM.yyyy HH:mm");
+                        await notificationService.NotifyAsync(
+                            appointment.Vet.UserId,
+                            "Randevu sonucu bekleniyor",
+                            $"{dateStr} tarihli randevunun sonucunu (Tamamlandı / Gelmedi) işaretlemeyi unutmayın.",
+                            "appointment_action_required",
+                            appointment.Id);
+
+                        appointment.CompletionReminderSent = true;
+                    }
+
+                    await dbContext.SaveChangesAsync(stoppingToken);
+                    _logger.LogInformation($"{awaitingOutcome.Count} randevu için hekime 'sonucu işaretle' hatırlatması gönderildi.");
+                }
             }
             catch (Exception ex)
             {

@@ -76,8 +76,16 @@ class _VetAppointmentsScreenState extends State<VetAppointmentsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Backend mesajını göster (örn. eşzamanlı güncelleme uyarısı)
+        String message = 'Hata oluştu';
+        if (e is DioException) {
+          final backendMessage = e.response?.data?['message'];
+          if (backendMessage is String && backendMessage.isNotEmpty) {
+            message = backendMessage;
+          }
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Hata oluştu'), backgroundColor: context.scheme.error),
+          SnackBar(content: Text(message), backgroundColor: context.scheme.error),
         );
       }
     }
@@ -307,6 +315,14 @@ class _VetAppointmentsScreenState extends State<VetAppointmentsScreen> {
                     .textTheme
                     .bodyMedium
                     ?.copyWith(fontStyle: FontStyle.italic)),
+          ],
+          // Hasta sahibi iptal ettiyse gerekçesini hekime göster
+          if (apt['status'] == 'cancelled' &&
+              apt['cancellationReason'] != null &&
+              apt['cancellationReason'].toString().isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _metaRow(Icons.cancel_outlined,
+                'İptal gerekçesi: ${apt['cancellationReason']}'),
           ],
           if (apt['status'] == 'confirmed' || apt['status'] == 'completed') ...[
             const SizedBox(height: AppSpacing.xs),
